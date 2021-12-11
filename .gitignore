@@ -1,0 +1,11 @@
+
+Assets/
+index-simplespritetest.html
+Libraries/pixi.js
+Libraries/pixi.js.map
+Libraries/twgl-full.js
+Libraries/twgl-full.min.js
+Rendering/GLObjectManager.js
+Misc/IDPool.js
+Misc/Examples/AnimatedSprite.js
+Misc/Examples/ExampleGame-col-begin.js
