@@ -2,77 +2,39 @@
 <html>
 <head>
     <title>Bomberman </title>
-
-    <script src="Libraries/twgl-full.min.js"></script>
     <link rel='stylesheet' href="Style/General.css" >
 
+
+
+
+    <!--  -->
     <script src="Misc/HelperFunctions.js"></script>
+    <script src="Misc/Logging.js"></script>
+    <script src="Misc/SeedRandom.js"></script>
 
-    <script src="Rendering/MeshHelper.js"></script>
-    <script src="Rendering/Rendering.js"></script>
-    <script src="Rendering/TestRender.js"></script>
+    <!-- <script src="Libraries/pixi.js"></script> -->
+    <script src="https://pixijs.download/release/pixi.js"></script>
 
-    <script type="x-shader/x-vertex" id="texVertex">
-        precision highp float;
-        precision highp int;
+    <script src="Input/KeyboardInput.js"></script>
 
-        uniform mat4 u_matrix; 
+    <script src="Rendering/LoadAssets.js"></script>
 
-        attribute mat4 a_modelMatrix;
-        attribute vec3 a_position;
-        attribute vec2 a_uv;
+    <script src="GameLogic/Game.js"></script>
+    <script src="GameLogic/IsometricFunctions.js"></script>
 
-        varying vec2 texCoord;
-        void main () {
-            texCoord = a_uv;
-
-            gl_Position = u_matrix * a_modelMatrix * vec4(a_position, 1.0);
-        }
-    </script>
-
-    <script type="x-shader/x-fragment" id="texFragment">
-        precision highp float;
-
-        uniform sampler2D texture;
-
-        varying vec2 texCoord;
-        void main () {
-            gl_FragColor = texture2D(texture, texCoord);
-        }
-    </script>
-
-    <!-- ---------------------------------------------- -->
-
-    <script type="x-shader/x-vertex" id="simpleVertex">
-        precision highp float;
-        precision highp int;
-
-        uniform mat4 u_matrix; 
-
-        attribute mat4 a_modelMatrix;
-        attribute vec3 a_position;
-
-        void main () {
-            gl_Position = u_matrix * a_modelMatrix * vec4(a_position, 1.0);
-        }
-    </script>
-
-    <script type="x-shader/x-fragment" id="redFragment">
-        precision highp float;
-
-        void main () {
-            gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-        }
-    </script>
+    <!--  -->
+    <!-- <script src="Misc/Examples/ParseSpriteSheet.js"></script> -->
+    <!-- <script src="Misc/Examples/IsometricTiling.js"></script> -->
+    <!-- <script src="Misc/Examples/TestPlayerMovement.js"></script> -->
+    <script src="Misc/Examples/TestSimpleCollision.js"></script>
+    <script src="Misc/Examples/ExampleGame.js"></script>
+    <!--  -->
 
 </head>
-<body>
+    <body>
 
-    <canvas id="canvas"></canvas>
+        <script src="Main.js"></script>
 
-    <script src="Rendering/SetupGLCanvas.js"></script>
-    <script src="Rendering/SetupRenderNecessities.js"></script>
-    <script src="Main.js"></script>
 
-</body>
+    </body>
 </html>
