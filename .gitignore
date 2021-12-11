@@ -1,5 +1,8 @@
 
 Assets/
+!Assets/bunny.png
+!Assets/IsometricTRPGAssetPack_Entities.png
+!Assets/Isometric_MedievalFantasy_Tiles.png
 index-simplespritetest.html
 Libraries/pixi.js
 Libraries/pixi.js.map
