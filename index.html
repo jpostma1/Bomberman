@@ -7,10 +7,18 @@
     <link rel='stylesheet' href="Style/General.css" >
 
     <script src="Misc/HelperFunctions.js"></script>
+    <script src="Misc/Logging.js"></script>
+    <script src="Misc/IDPool.js"></script>
+
+    <script src="Input/KeyboardInput.js"></script>
+
+    <script src="GameLogic/Player/Player.js"></script>    
+    <script src="GameLogic/Player/PlayerManager.js"></script>
 
     <script src="Rendering/MeshHelper.js"></script>
     <script src="Rendering/Rendering.js"></script>
     <script src="Rendering/TestRender.js"></script>
+    <script src="Rendering/GLObjectManager.js"></script>
 
     <script type="x-shader/x-vertex" id="texVertex">
         precision highp float;
@@ -64,6 +72,37 @@
             gl_FragColor = vec4(1.0,0.0,0.0,1.0);
         }
     </script>
+    <!-- ------------------ -->
+    <script type="x-shader/x-vertex" id="colorVertex">
+        precision highp float;
+        precision highp int;
+
+        uniform mat4 u_matrix; 
+
+        attribute mat4 a_modelMatrix;
+        attribute vec3 a_position;
+        attribute vec4 a_color;
+
+        varying vec4 color;        
+        void main () {
+            color = a_color;
+            gl_Position = u_matrix * a_modelMatrix * vec4(a_position, 1.0);
+        }
+    </script>
+
+    <script type="x-shader/x-vertex"  id="colorFragment">
+        precision highp float;
+
+
+
+        varying vec4 color;
+        
+        void main () {
+            gl_FragColor = color;
+        }
+
+    </script>
+
 
 </head>
 <body>
@@ -72,6 +111,7 @@
 
     <script src="Rendering/SetupGLCanvas.js"></script>
     <script src="Rendering/SetupRenderNecessities.js"></script>
+    <script src="GameLogic/HandleInput.js"></script>
     <script src="Main.js"></script>
 
 </body>

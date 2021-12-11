@@ -1,0 +1,14 @@
+
+GameLogic/Player/PlayerManager.js
+GameLogic/Player/Player.js
+GameLogic/Player/PlayerManager.js
+Libraries/twgl-full.js
+Libraries/twgl-full.min.js
+Misc/Examples/AnimatedSprite.js
+Misc/IDPool.js
+Rendering/GLObjectManager.js
+Rendering/MeshHelper.js
+Rendering/Rendering.js
+Rendering/SetupGLCanvas.js
+Rendering/SetupRenderNecessities.js
+GameLogic/HandleInput.js
