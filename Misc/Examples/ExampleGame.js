@@ -151,7 +151,7 @@ let center          = 0.5
 let centerCoord     = { x: 0.5, y: 0.5}
 
 // let standardPlayerSpeed = 0.05 
-let standardPlayerSpeed = 0.2 // 0.1
+let standardPlayerSpeed = 0.1 // 0.1
 class ExampleGame {
 
     constructor(app, levelString) {
@@ -207,7 +207,9 @@ class ExampleGame {
         // print when player is on a collision tile
         this.player.runMechanics()
 
-        this.checkPlayerCollision(this.player)
+        let logicFrames = 3
+        for(var i = 0; i < logicFrames; i++)
+            this.checkPlayerCollision(this.player)
         this.player.updateIsometricPos()
     }
 
@@ -290,31 +292,7 @@ class ExampleGame {
                 player.x -= player.speed
                 player.y += player.speed
             break;
-            case "allPointsCollide":
-                // move backwards
-                player.x += player.speed
-                player.y -= player.speed
-            break;
-            case "collide1":
-                console.log("leftup: collide1")
-                if(isCenteredFromUp(player.y, player.speed)) {
-                    player.x -= player.speed
-                    player.y += player.speed
-                } else {
-                    // left Up coll, so move down
-                    player.y += player.speed
-                }
-            break;
-            case "collide2":
-                console.log("leftup: collide2")
-                if(isCenteredFromLeft(player.y, player.speed)) {
-                    player.x -= player.speed
-                    player.y += player.speed
-                } else {
-                    // right Down coll, so move left
-                    player.x -= player.speed
-                }
-            break;
+
             case "collideMidAnd1":
                 console.log("leftup: collideMidAnd1")
                 player.y += player.speed
@@ -323,10 +301,49 @@ class ExampleGame {
                 console.log("leftup: collideMidAnd2")
                 player.x -= player.speed
             break;
+            case "collide1":
+                console.log("leftup: collide1")
+                centerFromUpOrContinue()
+            break;
+            case "collide2":
+                console.log("leftup: collide2")
+                centerFromLeftOrContinue()
+            break;
+            case "allPointsCollide":
+                let corner1Col = this.collides(addCoord(leftDownCorner, dPos))
+                let corner2Col = this.collides(addCoord(rightUpCorner, dPos))
+                if (corner1Col && corner2Col) {
+                    // move nothing
+                } else if (corner1Col) {
+                    centerFromUpOrContinue()
+                } else if (corner2Col) {
+                    centerFromLeftOrContinue()
+                }
+            break;
             case "noCollision":
                 player.x -= player.speed
                 player.y += player.speed
             break;
+        }
+
+        function centerFromUpOrContinue () {
+            if(isCenteredFromUp(player.y, player.speed)) {
+                player.x -= player.speed
+                player.y += player.speed
+            } else {
+                // left Up coll, so move down
+                player.y += player.speed
+            }
+        }
+
+        function centerFromLeftOrContinue () {
+            if(isCenteredFromLeft(player.y, player.speed)) {
+                player.x -= player.speed
+                player.y += player.speed
+            } else {
+                // right Down coll, so move left
+                player.x -= player.speed
+            }
         }
     }
 
@@ -348,31 +365,6 @@ class ExampleGame {
                 player.x += player.speed
                 player.y += player.speed
             break;
-            case "allPointsCollide":
-                // move backwards
-                player.x -= player.speed
-                player.y -= player.speed
-            break;
-            case "collide1":
-                console.log("rightup: collide1")
-                if(isCenteredFromRight(player.y, player.speed)) {
-                    player.x += player.speed
-                    player.y += player.speed
-                } else {
-                    // left Up coll, so move right
-                    player.x += player.speed
-                }
-            break;
-            case "collide2":
-                console.log("rightup: collide2")
-                if(isCenteredFromUp(player.y, player.speed)) {
-                    player.x += player.speed
-                    player.y += player.speed
-                } else {
-                    // right Down coll, so move up
-                    player.y += player.speed
-                }
-            break;
             case "collideMidAnd1":
                 console.log("rightup: collideMidAnd1")
                 player.x += player.speed
@@ -381,10 +373,49 @@ class ExampleGame {
                 console.log("rightup: collideMidAnd2")
                 player.y += player.speed
             break;
+            case "collide1":
+                console.log("rightup: collide1")
+                centerFromRightOrContinue() 
+            break;
+            case "collide2":
+                console.log("rightup: collide2")
+                centerFromUpOrContinue()
+            break;
+            case "allPointsCollide":
+                let corner1Col = this.collides(addCoord(leftUpCorner, dPos))
+                let corner2Col = this.collides(addCoord(rightDownCorner, dPos))
+                if (corner1Col && corner2Col) {
+                    // move nothing
+                } else if (corner1Col) {
+                    centerFromRightOrContinue()
+                } else if (corner2Col) {
+                    centerFromUpOrContinue()
+                }
+            break;
             case "noCollision":
                 player.x += player.speed
                 player.y += player.speed
             break;
+        }
+
+        function centerFromRightOrContinue() {
+            if(isCenteredFromRight(player.y, player.speed)) {
+                player.x += player.speed
+                player.y += player.speed
+            } else {
+                // left Up coll, so move right
+                player.x += player.speed
+            }
+        }
+
+        function centerFromUpOrContinue() {
+            if(isCenteredFromUp(player.y, player.speed)) {
+                player.x += player.speed
+                player.y += player.speed
+            } else {
+                // right Down coll, so move up
+                player.y += player.speed
+            }
         }
     }
 
@@ -395,54 +426,63 @@ class ExampleGame {
         let coord2          = addCoord(leftSide, dPos)
         switch(this.handleSide(coord1, coordMid, coord2)) {
             case "collideMid":
-                importantLog("leftdown: collideMid")
                 if(closerToCenter(coord1, coord2)) {
                     player.y -= player.speed
                 } else 
                     player.x -= player.speed
             break;
             case "collide1And2":
-                console.log("leftdown: collide1And2")
                 player.x -= player.speed
                 player.y -= player.speed
             break;
-            case "allPointsCollide":
-                // move backwards
-                player.x += player.speed
-                player.y += player.speed
-            break;
+            
             case "collide1":
-                console.log("leftdown: collide1")
-                if(isCenteredFromDown(player.y, player.speed)) {
-                    player.x -= player.speed
-                    player.y -= player.speed
-                } else {
-                    // right Down coll, so move left
-                    player.x -= player.speed
-                }
+                centerFromDownOrContinue()
             break;
             case "collide2":
-                console.log("leftdown: collide2")
-                if(isCenteredFromLeft(player.y, player.speed)) {
-                    player.x -= player.speed
-                    player.y -= player.speed
-                } else {
-                    // left Up coll, so move down
-                    player.y -= player.speed
-                }
+                centerFromLeftOrContinue()
             break;
             case "collideMidAnd1":
-                console.log("leftdown: collideMidAnd1")
                 player.x -= player.speed
             break;
             case "collideMidAnd2":
-                console.log("leftdown: collideMidAnd2")
                 player.y -= player.speed
+            break;
+            case "allPointsCollide":
+                let corner1Col = this.collides(addCoord(rightDownCorner, dPos))
+                let corner2Col = this.collides(addCoord(leftUpCorner, dPos))
+                if (corner1Col && corner2Col) {
+                    // move nothing
+                } else if (corner1Col) {
+                    centerFromDownOrContinue()
+                } else if (corner2Col) {
+                    centerFromLeftOrContinue()
+                }
             break;
             case "noCollision":
                 player.x -= player.speed
                 player.y -= player.speed
             break;
+        }
+
+        function centerFromDownOrContinue() {
+            if(isCenteredFromDown(player.y, player.speed)) {
+                player.x -= player.speed
+                player.y -= player.speed
+            } else {
+                // right Down coll, so move left
+                player.x -= player.speed
+            }
+        }
+
+        function centerFromLeftOrContinue() {
+            if(isCenteredFromLeft(player.y, player.speed)) {
+                player.x -= player.speed
+                player.y -= player.speed
+            } else {
+                // left Up coll, so move down
+                player.y -= player.speed
+            }
         }
     }
 
@@ -453,50 +493,37 @@ class ExampleGame {
         let coord2          = addCoord(downSide, dPos)
         switch(this.handleSide(coord1, coordMid, coord2)) {
             case "collideMid":
-                importantLog("rightdown: collideMid")
                 if(closerToCenter(coord1, coord2)) {
                     player.x += player.speed
                 } else 
                     player.y -= player.speed
             break;
             case "collide1And2":
-                console.log("rightdown: collide1And2")
                 player.x += player.speed
                 player.y -= player.speed
             break;
-            case "allPointsCollide":
-                // move backwards
-                console.log("rightdown: allPointsCollide, move backwards")
-                player.x -= player.speed
-                player.y += player.speed
-            break;
-            case "collide1":
-                console.log("rightdown: collide1")
-                if(isCenteredFromRight(player.y, player.speed)) {
-                    player.x += player.speed
-                    player.y -= player.speed
-                } else {
-                    // right coll, so move down
-                    player.y -= player.speed
-                }
-            break;
-            case "collide2":
-                console.log("rightdown: collide2")
-                if(isCenteredFromDown(player.y, player.speed)) {
-                    player.x += player.speed
-                    player.y -= player.speed
-                } else {
-                    // down coll, so move right
-                    player.x += player.speed
-                }
-            break;
             case "collideMidAnd1":
-                console.log("rightdown: collideMidAnd1")
                 player.y -= player.speed
             break;
             case "collideMidAnd2":
-                console.log("rightdown: collideMidAnd2")
                 player.x += player.speed
+            break;
+            case "collide1":
+                centerFromRightOrContinue()
+            break;
+            case "collide2":
+                centerFromDownOrContinue()
+            break;
+            case "allPointsCollide":
+                let corner1Col = this.collides(addCoord(rightUpCorner, dPos))
+                let corner2Col = this.collides(addCoord(leftDownCorner, dPos))
+                if (corner1Col && corner2Col) {
+                    // move nothing
+                } else if (corner1Col) {
+                    centerFromRightOrContinue()
+                } else if (corner2Col) {
+                    centerFromDownOrContinue()
+                }
             break;
             case "noCollision":
                 console.log("rightdown: noCollision")
@@ -504,8 +531,30 @@ class ExampleGame {
                 player.y -= player.speed
             break;
         }
-    }
 
+        function centerFromRightOrContinue() {
+            if(isCenteredFromRight(player.y, player.speed)) {
+                player.x += player.speed
+                player.y -= player.speed
+            } else {
+                // right coll, so move down
+                player.y -= player.speed
+            }
+        }
+        function centerFromDownOrContinue() {
+            if(isCenteredFromDown(player.y, player.speed)) {
+                player.x += player.speed
+                player.y -= player.speed
+            } else {
+                // down coll, so move right
+                player.x += player.speed
+            }
+        }
+    }
+    
+    // ===============================================================
+    // ================== single direction ===========================
+    // ===============================================================
     handleLeftMovement(player) {
         let dPos = {x: player.x - player.speed, y: player.y}
         let coord1          = addCoord(leftDownCorner, dPos)
@@ -550,6 +599,7 @@ class ExampleGame {
         }
     }
 
+    
     handleRightMovement(player) {
         let dPos = {x: player.x + player.speed, y: player.y}
         let coord1          = addCoord(rightUpCorner, dPos)
