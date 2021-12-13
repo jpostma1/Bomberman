@@ -11,7 +11,6 @@ function spawnExampleGame(app, lvlString) {
 }
 
 
-
 class ExamplePlayer {
 
     constructor(lvlStage, x, y, zIndex = 0, speed = 1) {
@@ -26,7 +25,7 @@ class ExamplePlayer {
             logError(this.y)
         }
 
-        // TODO: make input dependent
+        // TODO: make configurable dependent
         this.keyLeft   = 'left'
         this.keyRight  = 'right'
         this.keyUp     = 'up'
@@ -55,34 +54,10 @@ class ExamplePlayer {
                     2
                     )
             )
-        // TODO: handle sprite code from game as well
+        // TODO: move sprite code to game as well
         this.sprite = new PIXI.Sprite(texture)
         this.sprite.anchor._x = 0.5
         this.sprite.anchor._y = 0.5
-        const textureLU = new PIXI.Texture(allTilesTexture, getAnimationFrameRectangle(        allTilesTexture, 
-                    sheetWidth, 
-                    sheetHeight, 
-                    //tile column
-                    1,
-                    //tile row
-                    2
-                    )
-            )
-        this.spriteLU = new PIXI.Sprite(textureLU)
-        this.spriteLU.anchor._x = 0.5
-        this.spriteLU.anchor._y = 0.5
-        const textureLD = new PIXI.Texture(allTilesTexture, getAnimationFrameRectangle(        allTilesTexture, 
-                    sheetWidth, 
-                    sheetHeight, 
-                    //tile column
-                    0,
-                    //tile row
-                    2
-                    )
-            )
-        this.spriteLD = new PIXI.Sprite(textureLD)
-        this.spriteLD.anchor._x = 0.5
-        this.spriteLD.anchor._y = 0.5
         // this.sprite.scale.set(3,3)
         this.sprite.scale.set(1,1)
         this.sprite.zIndex = zIndex
@@ -107,10 +82,6 @@ class ExamplePlayer {
     updateIsometricPos() {
         this.sprite.x = this.lvlStage.getIsometricX(this.x, this.y)
         this.sprite.y = this.lvlStage.getIsometricY(this.x, this.y)
-        this.spriteLU.x = this.lvlStage.getIsometricX(this.x+leftUpCorner.x, this.y+leftUpCorner.y)
-        this.spriteLU.y = this.lvlStage.getIsometricY(this.x+leftUpCorner.x, this.y+leftUpCorner.y)
-        this.spriteLD.x = this.lvlStage.getIsometricX(this.x+leftDownCorner.x, this.y+leftDownCorner.y)
-        this.spriteLD.y = this.lvlStage.getIsometricY(this.x+leftDownCorner.x, this.y+leftDownCorner.y)
     }
 
     updateMovementDirection() {
@@ -129,19 +100,15 @@ class ExamplePlayer {
 
     clunckyMovement() {
         if(keyPressed('left')) {
-            // verboseLog("moving left")
             this.x -= this.speed
         }
         if(keyPressed('right')) {
-            // verboseLog("moving right")
             this.x += this.speed
         }
         if(keyPressed('up')) {
-            // verboseLog("moving up")
             this.y += this.speed
         }
         if(keyPressed('down')) {
-            // verboseLog("moving down")
             this.y -= this.speed
         }
     }
@@ -173,10 +140,6 @@ class ExampleGame {
         console.log('player', this.player.sprite)
         console.log('level', this.level.container)
         this.level.addChild(this.player.sprite)
-        // debug
-        // this.level.addChild(this.player.spriteLU)
-        // this.level.addChild(this.player.spriteLD)
-
 
         this.setupCollisionMap(levelString)
 
@@ -233,10 +196,9 @@ class ExampleGame {
 
     collides(cornerPlusSpeedOffset) {
         var tileValue = this.collisionMap.checkValue(cornerPlusSpeedOffset.x, cornerPlusSpeedOffset.y)
-        if (tileValue > 0) {
-            //cornerPlusSpeedOffset.x)+", y: "+Math.floor(cornerPlusSpeedOffset.y))
+        if (tileValue > 0)
             return true
-        }
+
         return false
     }
 
@@ -768,8 +730,6 @@ class ExampleLevel {
     constructor(lvlString) {
         
         this.setupTiles(lvlString)
-
-
 
     }
 
