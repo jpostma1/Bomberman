@@ -88,6 +88,21 @@ class ExamplePlayer {
         this.sprite.zIndex = zIndex
     }
 
+    setX(x) {
+        this.x = x
+    }
+    setY(y) {
+        this.y = y
+    }
+
+    moveX(x) {
+        this.x += x
+    }
+    moveY(y) {
+        this.y += y
+    }
+
+
 
     updateIsometricPos() {
         this.sprite.x = this.lvlStage.getIsometricX(this.x, this.y)
@@ -143,7 +158,7 @@ let center          = 0.5
 let centerCoord     = { x: 0.5, y: 0.5}
 
 // let standardPlayerSpeed = 0.05 
-let standardPlayerSpeed = 0.1 // 0.1
+let standardPlayerSpeed = 0.1
 class ExampleGame {
 
     constructor(app, levelString) {
@@ -286,23 +301,23 @@ class ExampleGame {
             case "collideMid":
                 importantLog("leftup: collideMid")
                 if(closerToCenter(coord1, coord2)) {
-                    player.x -= player.speed
+                    player.moveX(-player.speed)
                 } else 
-                    player.y += player.speed
+                    player.moveY(player.speed)
             break;
             case "collide1And2":
                 console.log("leftup: collide1And2")
-                player.x -= player.speed
-                player.y += player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             break;
 
             case "collideMidAnd1":
                 console.log("leftup: collideMidAnd1")
-                player.y += player.speed
+                player.moveY(player.speed)
             break;
             case "collideMidAnd2":
                 console.log("leftup: collideMidAnd2")
-                player.x -= player.speed
+                player.moveX(-player.speed)
             break;
             case "collide1":
                 console.log("leftup: collide1")
@@ -324,28 +339,28 @@ class ExampleGame {
                 }
             break;
             case "noCollision":
-                player.x -= player.speed
-                player.y += player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             break;
         }
 
         function centerFromUpOrContinue () {
             if(isCenteredFromUp(player.y, player.speed)) {
-                player.x -= player.speed
-                player.y += player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             } else {
                 // left Up coll, so move down
-                player.y += player.speed
+                player.moveY(player.speed)
             }
         }
 
         function centerFromLeftOrContinue () {
             if(isCenteredFromLeft(player.y, player.speed)) {
-                player.x -= player.speed
-                player.y += player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             } else {
                 // right Down coll, so move left
-                player.x -= player.speed
+                player.moveX(-player.speed)
             }
         }
     }
@@ -359,22 +374,22 @@ class ExampleGame {
             case "collideMid":
                 importantLog("rightup: collideMid")
                 if(closerToCenter(coord1, coord2)) {
-                    player.y += player.speed
+                    player.moveY(player.speed)
                 } else 
-                    player.x += player.speed
+                    player.moveX(player.speed)
             break;
             case "collide1And2":
                 console.log("rightup: collide1And2")
-                player.x += player.speed
-                player.y += player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             break;
             case "collideMidAnd1":
                 console.log("rightup: collideMidAnd1")
-                player.x += player.speed
+                player.moveX(player.speed)
             break;
             case "collideMidAnd2":
                 console.log("rightup: collideMidAnd2")
-                player.y += player.speed
+                player.moveY(player.speed)
             break;
             case "collide1":
                 console.log("rightup: collide1")
@@ -396,28 +411,28 @@ class ExampleGame {
                 }
             break;
             case "noCollision":
-                player.x += player.speed
-                player.y += player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             break;
         }
 
         function centerFromRightOrContinue() {
             if(isCenteredFromRight(player.y, player.speed)) {
-                player.x += player.speed
-                player.y += player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             } else {
                 // left Up coll, so move right
-                player.x += player.speed
+                player.moveX(player.speed)
             }
         }
 
         function centerFromUpOrContinue() {
             if(isCenteredFromUp(player.y, player.speed)) {
-                player.x += player.speed
-                player.y += player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(player.speed*Math.SQRT1_2)
             } else {
                 // right Down coll, so move up
-                player.y += player.speed
+                player.moveY(player.speed)
             }
         }
     }
@@ -430,13 +445,13 @@ class ExampleGame {
         switch(this.handleSide(coord1, coordMid, coord2)) {
             case "collideMid":
                 if(closerToCenter(coord1, coord2)) {
-                    player.y -= player.speed
+                    player.moveY(-player.speed)
                 } else 
-                    player.x -= player.speed
+                    player.moveX(-player.speed)
             break;
             case "collide1And2":
-                player.x -= player.speed
-                player.y -= player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             break;
             
             case "collide1":
@@ -446,10 +461,10 @@ class ExampleGame {
                 centerFromLeftOrContinue()
             break;
             case "collideMidAnd1":
-                player.x -= player.speed
+                player.moveX(-player.speed)
             break;
             case "collideMidAnd2":
-                player.y -= player.speed
+                player.moveY(-player.speed)
             break;
             case "allPointsCollide":
                 let corner1Col = this.collides(addCoord(rightDownCorner, dPos))
@@ -463,28 +478,28 @@ class ExampleGame {
                 }
             break;
             case "noCollision":
-                player.x -= player.speed
-                player.y -= player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             break;
         }
 
         function centerFromDownOrContinue() {
             if(isCenteredFromDown(player.y, player.speed)) {
-                player.x -= player.speed
-                player.y -= player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             } else {
                 // right Down coll, so move left
-                player.x -= player.speed
+                player.moveX(-player.speed)
             }
         }
 
         function centerFromLeftOrContinue() {
             if(isCenteredFromLeft(player.y, player.speed)) {
-                player.x -= player.speed
-                player.y -= player.speed
+                player.moveX(-player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             } else {
                 // left Up coll, so move down
-                player.y -= player.speed
+                player.moveY(-player.speed)
             }
         }
     }
@@ -497,19 +512,19 @@ class ExampleGame {
         switch(this.handleSide(coord1, coordMid, coord2)) {
             case "collideMid":
                 if(closerToCenter(coord1, coord2)) {
-                    player.x += player.speed
+                    player.moveX(player.speed)
                 } else 
-                    player.y -= player.speed
+                    player.moveY(-player.speed)
             break;
             case "collide1And2":
-                player.x += player.speed
-                player.y -= player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             break;
             case "collideMidAnd1":
-                player.y -= player.speed
+                player.moveY(-player.speed)
             break;
             case "collideMidAnd2":
-                player.x += player.speed
+                player.moveX(player.speed)
             break;
             case "collide1":
                 centerFromRightOrContinue()
@@ -530,27 +545,27 @@ class ExampleGame {
             break;
             case "noCollision":
                 console.log("rightdown: noCollision")
-                player.x += player.speed
-                player.y -= player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             break;
         }
 
         function centerFromRightOrContinue() {
             if(isCenteredFromRight(player.y, player.speed)) {
-                player.x += player.speed
-                player.y -= player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             } else {
                 // right coll, so move down
-                player.y -= player.speed
+                player.moveY(-player.speed)
             }
         }
         function centerFromDownOrContinue() {
             if(isCenteredFromDown(player.y, player.speed)) {
-                player.x += player.speed
-                player.y -= player.speed
+                player.moveX(player.speed*Math.SQRT1_2)
+                player.moveY(-player.speed*Math.SQRT1_2)
             } else {
                 // down coll, so move right
-                player.x += player.speed
+                player.moveX(player.speed)
             }
         }
     }
@@ -568,25 +583,25 @@ class ExampleGame {
                 importantLog("left: collideMid")
             break;
             case "collide1And2":
-                player.x -= player.speed
+                player.moveX(-player.speed)
             break;
             case "allPointsCollide":
                 // move nothing
             break;
             case "collide1":
                 if(isCenteredFromDown(player.y, player.speed)) {
-                    player.x -= player.speed
+                    player.moveX(-player.speed)
                 } else {
                     // left Down coll, so move up
-                    player.y += player.speed
+                    player.moveY(player.speed)
                 }
             break;
             case "collide2":
                 if(isCenteredFromUp(player.y, player.speed)) {
-                    player.x -= player.speed
+                    player.moveX(-player.speed)
                 } else {
                     // left Up coll, so move down
-                    player.y -= player.speed
+                    player.moveY(-player.speed)
                 }
             break;
             case "collideMidAnd1":
@@ -596,7 +611,7 @@ class ExampleGame {
                 // move nothing
             break;
             case "noCollision":
-                player.x -= player.speed
+                player.moveX(-player.speed)
             break;
 
         }
@@ -613,25 +628,25 @@ class ExampleGame {
                 importantLog("right: collideMid")
             break;
             case "collide1And2":
-                player.x += player.speed
+                player.moveX(player.speed)
             break;
             case "allPointsCollide":
                 // move nothing
             break;
             case "collide1":
                 if(isCenteredFromUp(player.y, player.speed)) {
-                    player.x += player.speed
+                    player.moveX(player.speed)
                 } else {
                     // right Up coll, so move down
-                    player.y -= player.speed
+                    player.moveY(-player.speed)
                 }
             break;
             case "collide2":
                 if(isCenteredFromDown(player.y, player.speed)) {
-                    player.x += player.speed
+                    player.moveX(player.speed)
                 } else {
                     // right Down coll, so move up
-                    player.y += player.speed
+                    player.moveY(player.speed)
                 }
             break;
             case "collideMidAnd1":
@@ -641,7 +656,7 @@ class ExampleGame {
                 // move nothing
             break;
             case "noCollision":
-                player.x += player.speed
+                player.moveX(player.speed)
             break;
         }
     }
@@ -657,7 +672,7 @@ class ExampleGame {
                 importantLog("down: collideMid")
             break;
             case "collide1And2":
-                player.y -= player.speed
+                player.moveY(-player.speed)
             break;
             case "allPointsCollide":
                 // move nothing
@@ -665,18 +680,18 @@ class ExampleGame {
             break;
             case "collide1":
                 if (isCenteredFromRight(player.x, player.speed)) {
-                    player.y -= player.speed
+                    player.moveY(-player.speed)
                 } else {
                     // left down coll, so move right
-                    player.x += player.speed
+                    player.moveX(player.speed)
                 }
             break;
             case "collide2":
                 if (isCenteredFromLeft(player.x, player.speed)) {
-                    player.y -= player.speed
+                    player.moveY(-player.speed)
                 } else {
                     // right down coll, so move left
-                    player.x -= player.speed
+                    player.moveX(-player.speed)
                 }
             break;
             case "collideMidAnd1":
@@ -684,7 +699,7 @@ class ExampleGame {
             case "collideMidAnd2":
             break;
             case "noCollision":
-                player.y -= player.speed
+                player.moveY(-player.speed)
             break;
 
         }
@@ -700,25 +715,25 @@ class ExampleGame {
                 importantLog("up: collideMid")
             break;
             case "collide1And2":
-                player.y += player.speed
+                player.moveY(player.speed)
             break;
             case "allPointsCollide":
                 // move nothing
             break;
             case "collide1":
                 if(isCenteredFromLeft(player.x, player.speed)) {
-                    player.y += player.speed
+                    player.moveY(player.speed)
                 } else {
                     // up Down coll, so move up
-                    player.x += player.speed
+                    player.moveX(player.speed)
                 }
             break;
             case "collide2":
                 if(isCenteredFromRight(player.x, player.speed)) {
-                    player.y += player.speed
+                    player.moveY(player.speed)
                 } else {
                     // up Up coll, so move down
-                    player.x -= player.speed
+                    player.moveX(-player.speed)
                 }
             break;
             case "collideMidAnd1":
@@ -728,7 +743,7 @@ class ExampleGame {
                 // move nothing
             break;
             case "noCollision":
-                player.y += player.speed
+                player.moveY(player.speed)
             break;
 
         }
