@@ -21,8 +21,8 @@ function example4SimpleCollision(lvlString) {
 
     exampleGame = spawnExampleGame(app, lvlString);
 
-    app.ticker.add(() => {
-        exampleGame.runMechanics()
+    app.ticker.add((deltaFrames) => {
+        exampleGame.runMechanics(deltaFrames)
     })
 }
 

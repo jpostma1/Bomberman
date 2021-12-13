@@ -98,15 +98,7 @@ class ExamplePlayer {
         this.spriteLD.y = this.lvlStage.getIsometricY(this.x+leftDownCorner.x, this.y+leftDownCorner.y)
     }
 
-    runMechanics() {
-
-        // this.clunckyMovement()
-        this.movement()
-
-        this.updateIsometricPos()
-    }
-
-    movement() {
+    updateMovementDirection() {
         this.moving = ""
         if(keyPressed(this.keyLeft)) {
             this.moving = "left"
@@ -173,6 +165,11 @@ class ExampleGame {
 
         this.setupCollisionMap(levelString)
 
+        this.initializeVars()
+    }
+
+    initializeVars () {
+        this.unaccountedDeltaTime = 0
     }
 
     setupCollisionMap(levelString) {
@@ -202,14 +199,20 @@ class ExampleGame {
         }
     }
 
-    runMechanics() {
+    runMechanics(newDelta) {
+        this.player.updateMovementDirection()
 
-        // print when player is on a collision tile
-        this.player.runMechanics()
+        let currentDelta = this.unaccountedDeltaTime+newDelta
 
-        let logicFrames = 3
-        for(var i = 0; i < logicFrames; i++)
+        for(var i = 0; i < currentDelta; i++)
             this.checkPlayerCollision(this.player)
+
+        this.unaccountedDeltaTime = getFraction(currentDelta)
+            
+        this.readyForRender()
+    }
+
+    readyForRender() {
         this.player.updateIsometricPos()
     }
 
