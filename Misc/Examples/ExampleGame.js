@@ -6,8 +6,8 @@ function spawnExamplePlayer(lvlStage, x, y, zIndex = 0, speed = 0.1) {
     return new ExamplePlayer(lvlStage, x, y, zIndex, speed)
 }
 
-function spawnExampleGame(app, lvlString) {
-    return new ExampleGame(app, lvlString)
+function spawnExampleGame(app, levelString) {
+    return new ExampleGame(app, levelString)
 }
 
 
@@ -151,7 +151,7 @@ class ExampleGame {
     }
 
     setupCollisionMap(levelString) {
-        this.collisionMap = new ExampleCollisionMap(this.tileColumns, this.tileRows)
+        this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
         for(var x = 0; x < levelString.length; x++) {
             for(var y = 0; y < levelString[x].length; y++) {
                 switch(levelString[x][y]) {
@@ -727,9 +727,9 @@ class ExampleGame {
 
 
 class ExampleLevel {
-    constructor(lvlString) {
+    constructor(levelString) {
         
-        this.setupTiles(lvlString)
+        this.setupTiles(levelString)
 
     }
 
@@ -737,7 +737,7 @@ class ExampleLevel {
         this.container.addChild(child)
     }
 
-    setupTiles(lvlString) {
+    setupTiles(levelString) {
         this.container = new PIXI.Container()
         this.container.x = viewPortWidth/2
         this.container.y = viewPortHeight/2
@@ -867,37 +867,3 @@ function isCenteredFromDown(y, speed) {
     return fractional - center <= speed
 }
 
-class ExampleCollisionMap {
-
-    constructor(width, height) {
-        this.width = width
-        this.height = height
-        this.initMap()
-
-    }
-
-    initMap () {
-        this.collisionMap = []
-        for(var x = 0; x < this.width; x++) {
-            this.collisionMap[x] = [] 
-            for(var y = 0; y < this.height; y++) {
-                this.collisionMap[x][y] = 0
-            }
-        }
-    }
-
-    setCoord(coord, value) {
-        this.collisionMap[Math.floor(coord.x)][Math.floor(coord.y)] = value
-    }
-
-    setValue(x, y, value) {
-        this.collisionMap[Math.floor(x)][Math.floor(y)] = value
-    }
-
-    checkValue(x, y) {
-        return this.collisionMap[Math.floor(x)][Math.floor(y)]
-    }
-    setCoord(coord) {
-        return this.collisionMap[Math.floor(coord.x)][Math.floor(coord.y)]
-    }
-}
