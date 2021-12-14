@@ -99,17 +99,16 @@ class ExamplePlayer {
     }
 
     clunckyMovement() {
-        if(keyPressed('left')) {
-            this.x -= this.speed
+        this.moving = "snapToNearestFreeTile"
+        if (keyPressed(this.keyLeft)) {
+            this.moving = "leftup"
+        } else if (keyPressed(this.keyRight)) {
+            this.moving = "rightdown"
         }
-        if(keyPressed('right')) {
-            this.x += this.speed
-        }
-        if(keyPressed('up')) {
-            this.y += this.speed
-        }
-        if(keyPressed('down')) {
-            this.y -= this.speed
+        if (keyPressed(this.keyUp)) {
+            this.moving = "rightup"
+        } else if (keyPressed(this.keyDown)) {
+            this.moving = "leftdown"
         }
     }
 }
@@ -178,7 +177,10 @@ class ExampleGame {
     }
 
     runMechanics(newDelta) {
-        this.player.updateMovementDirection()
+        if (movementDirections == 8) {
+            this.player.updateMovementDirection()
+        } else 
+            this.player.clunckyMovement()
 
         let currentDelta = this.unaccountedDeltaTime+newDelta
 

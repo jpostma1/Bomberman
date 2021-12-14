@@ -2,10 +2,16 @@
 
 
 
+// set for global use
+let app; 
+let movementDirections = 4;
+let snapToNearestFreeTile = true
 
-var random = new Math.seedrandom('41849194');
-var app; // set for global use
-var levelString = [
+
+let random = new Math.seedrandom('41849194');
+
+
+let levelString = [
         "............c..",
         "............c..",
         "............c..",

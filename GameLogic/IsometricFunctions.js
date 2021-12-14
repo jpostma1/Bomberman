@@ -10,33 +10,35 @@
 
 function convertToIsometricDirectionName(movementString) {
     switch (movementString) {
+        case "snapToNearestFreeTile":
+            return "snapToNearestFreeTile"
         case "left":
+
             return "leftup"
-        break;
         case "right":
+
             return "rightdown"
-        break;
         case "up":
+
             return "rightup"
-        break;
+
         case "down":
             return "leftdown"
-        break;
-
 
         case "leftdown":
             return "left"
-        break;
+
         case "rightup":
             return "right"
-        break;
+
         case "leftup":
             return "up"
-        break;
+
         case "rightdown":
             return "down"
-        break;
 
+        case "":
+            return ""
 
     }
 }
