@@ -15,11 +15,7 @@ function exampleSideViewGame(lvlString) {
         antialias: false })
     document.body.appendChild(app.view)
     
-    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
-
-    // examplePlayer = spawnExamplePlayer(isoStage, 0, 0, playerZIndex);
-    // examplePlayerManager = spawnExamplePlayerManager(isoStage, sheetWidth, sheetHeight);
 
     exampleGame = new ExampleSideViewGame(app, lvlString);
 
@@ -64,10 +60,15 @@ class ExamplePlayer {
         this.keyDown   = 'down'
 
         this.speed = speed
-        this.targetTile = undefined // {x:x, y:y}
+
+        // These values can be 'unset' instead of using a seperate boolean for each I've used undefined to check if they are set. 
+        this.targetTile = undefined
+        this.movingDirection = undefined
+        this.secondaryMovingDirection = undefined
+        this.tabuDirection = undefined
+
 
         this.lvlStage = lvlStage
-
 
         this.updateCurrentTile()
         this.setupSprite(zIndex)
@@ -78,19 +79,18 @@ class ExamplePlayer {
         const allTilesTexture = PIXI.Texture.from('tilesFromSide')
         var sheetWidth = 7
         var sheetHeight = 1
-        // =========================
+        // ===========  ==============
         const targetSpriteTexture = new PIXI.Texture(allTilesTexture,
                     getAnimationFrameRectangle(allTilesTexture, 
                         sheetWidth, 
                         sheetHeight*2, 
                         //tile column
-                        4,
+                        1,
                         //tile row
                         0
                         ))
         this.targetSprite = new PIXI.Sprite(targetSpriteTexture)
         this.targetSprite.scale.set(0.5,0.5)
-        this.targetSprite.zIndex = 10000
         // =========================
 
 
@@ -100,18 +100,19 @@ class ExamplePlayer {
                         sheetWidth, 
                         sheetHeight*2, 
                         //tile column
-                        1,
+                        4,
                         //tile row
                         0
                         ))
         // const texture = PIXI.Texture.from('bunny')
         this.sprite = new PIXI.Sprite(texture)
 
-        // this.sprite.anchor._x = 0.5
-        // this.sprite.anchor._y = 0.5
 
         this.sprite.scale.set(0.5,0.5)
         // this.sprite.scale.set(1,0.65)
+
+
+
         this.sprite.zIndex = zIndex
     }
 
@@ -149,14 +150,13 @@ class ExamplePlayer {
         
     }
 
-    updateCurrentTile() {
-        this.currentTile = { x:Math.round(this.x), y:Math.round(this.y) }
-    }
+
 
     updateSpritePos() {
         this.sprite.x = this.lvlStage.toScreenCoordX(this.x)
         this.sprite.y = this.lvlStage.toScreenCoordY(this.y)
         this.sprite.zIndex = Math.floor(this.y)*zIndexRowOffset+1
+        this.targetSprite.zIndex = this.sprite.zIndex-1
 
         if(this.targetTile != undefined) {
             this.targetSprite.x = this.lvlStage.toScreenCoordX(this.targetTile.x)
@@ -168,65 +168,131 @@ class ExamplePlayer {
 
     }
 
-    updateMovementDirection() {
-        this.moving = ""
-        if (keyPressed(this.keyLeft)) {
-            this.moving = "left"
-        } else if (keyPressed(this.keyRight)) {
-            this.moving += "right"
-        }
-        if (keyPressed(this.keyUp)) {
-            this.moving += "up"
-        } else if (keyPressed(this.keyDown)) {
-            this.moving += "down"
-        }
-    }
-
     fourDirectionMovement() {
-        this.moving = "snapToTargetTile"
 
         if (keyPressed(this.keyLeft)) {
-            this.moving = "left"
-            this.movingDirection = leftDir
-        } else if (keyPressed(this.keyRight)) {
-            this.moving = "right"
-            this.movingDirection = rightDir
-        } else if (keyPressed(this.keyDown)) {
-            this.moving = "down"
-            this.movingDirection = upDir
-        } else if (keyPressed(this.keyUp)) {
-            this.moving = "up"
-            this.movingDirection = downDir
-        } else 
-            this.movingDirection = undefined
+
+            if (this.movingDirection == undefined) 
+                this.movingDirection = leftDir
+            else if (this.movingDirection != leftDir)
+                this.secondaryMovingDirection = leftDir
+
+        } else {
+            this.maybeResetMovingDirection(leftDir)
+        }
+
+        if (keyPressed(this.keyRight)) {
+
+            if (this.movingDirection == undefined) 
+                this.movingDirection = rightDir
+            else if (this.movingDirection != rightDir)
+                this.secondaryMovingDirection = rightDir
+
+        } else {
+            this.maybeResetMovingDirection(rightDir)
+        }
+
+        if (keyPressed(this.keyDown)) {
+            
+            if (this.movingDirection == undefined) 
+                this.movingDirection = upDir
+            else if (this.movingDirection != upDir)
+                this.secondaryMovingDirection = upDir
+
+        } else {
+            this.maybeResetMovingDirection(upDir)
+        }
+
+        if (keyPressed(this.keyUp)) {
+            
+            if (this.movingDirection == undefined) 
+                this.movingDirection = downDir
+            else if (this.movingDirection != downDir)
+                this.secondaryMovingDirection = downDir
+
+        } else {
+            this.maybeResetMovingDirection(downDir)
+        }
+
     }
 
 
+    pathFreeInDir(collidesFunc, direction) {
+
+        if(direction != undefined) {
+
+            let potentialTargetTile = addCoord(direction, this.currentTile)
+            if (!collidesFunc(potentialTargetTile)) {
+
+                if (this.alingedWith(potentialTargetTile)) {
+                    return potentialTargetTile
+                } else if(this.targetTile != undefined) {
+                    
+                    let secondaryCornerTile = addCoord(direction, this.targetTile)
+                    if (collidesFunc(secondaryCornerTile)) {
+                        // move backwards to prevent sticking to corner
+                        return this.currentTile
+                    }
+                }
+            }
+        }
+
+        return undefined
+    }
 
     calcTargetTile(collidesFunc) {
         this.updateCurrentTile()
 
         if (this.movingDirection != undefined) {
 
-            let potentialTargetTile = addCoord(this.movingDirection, this.currentTile)
-            if (!collidesFunc(potentialTargetTile)) {
-                if (this.alingedWith(potentialTargetTile)) {
-                    console.log("alingedWith")
-                    this.targetTile = potentialTargetTile
-                } else if(this.targetTile != undefined) {
-                    console.log("!  alingedWith")
-                    let potentialCornerTile = addCoord(this.movingDirection, this.targetTile)
-                    if (collidesFunc(potentialCornerTile))
-                        console.log("set targetTile to current:", this.targetTile, this.currentTile)
-                        // move backwards to prevent sticking to corner
-                        this.targetTile = this.currentTile
+            if (this.tabuDirection != this.secondaryMovingDirection) {
+            
+                let newTargetTile = this.pathFreeInDir(collidesFunc, this.secondaryMovingDirection)
+                if (newTargetTile != undefined) {
+                    this.targetTile = newTargetTile
+                    this.setTabuSecondaryDirection()
+                    return
                 }
             }
+
+            let potentialTargetTile = this.pathFreeInDir(collidesFunc, this.movingDirection)
+            if (potentialTargetTile != undefined) {
+                this.targetTile = potentialTargetTile
+            } 
         }
     }
 
     alingedWith(tile) {
         return Math.abs(this.x - tile.x) < this.speed || Math.abs(this.y - tile.y) < this.speed * yDistortion
+    }
+
+    updateCurrentTile() {
+        this.currentTile = { x:Math.round(this.x), y:Math.round(this.y) }
+    }
+
+    resetMovingDirection() {
+        this.movingDirection = this.secondaryMovingDirection
+        this.secondaryMovingDirection = undefined
+        this.tabuDirection = undefined
+    }
+
+    maybeResetMovingDirection(direction) {
+        if (this.movingDirection == direction)
+
+            this.resetMovingDirection()
+
+        else if (this.secondaryMovingDirection == direction) {
+            this.secondaryMovingDirection = undefined
+            this.tabuDirection = undefined
+        }
+        
+    }
+
+    setTabuSecondaryDirection() {
+        let temp = this.secondaryMovingDirection
+        this.secondaryMovingDirection = this.movingDirection
+        this.movingDirection = temp
+        this.tabuDirection = this.secondaryMovingDirection
     }
 }
 
@@ -290,8 +356,8 @@ class ExampleSideViewGame {
         // to pass a member function requires a lambda, otherwise 'this' isn't bound correctly 
         this.player.calcTargetTile((pos) => this.collides(pos))
 
-        if(this.player.targetTile && this.collides(this.player.targetTile) != 0)
-            this.player.targetTile = undefined
+        // if(this.player.targetTile && this.collides(this.player.targetTile) != 0)
+        //     this.player.targetTile = undefined
 
 
         let currentDelta = this.unaccountedDeltaTime+newDelta
