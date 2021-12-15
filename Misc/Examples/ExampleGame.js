@@ -7,7 +7,7 @@ function spawnExamplePlayer(lvlStage, x, y, zIndex = 0, speed = 0.1) {
 }
 
 function spawnExampleGame(app, levelString) {
-    return new ExampleGame(app, levelString)
+    return new ExampleIsometricGame(app, levelString)
 }
 
 
@@ -125,7 +125,7 @@ let centerCoord     = { x: 0.5, y: 0.5}
 
 // let standardPlayerSpeed = 0.05 
 let standardPlayerSpeed = 0.1
-class ExampleGame {
+class ExampleIsometricGame {
 
     constructor(app, levelString) {
         this.tileColumns = levelString.length
@@ -133,7 +133,7 @@ class ExampleGame {
 
         console.log(this.tileColumns, this.tileRows)
 
-        this.level = new ExampleLevel(levelString)
+        this.level = new ExampleIsometricLevel(levelString)
         app.stage.addChild(this.level.container)
         this.player = new ExamplePlayer(this.level.isoStage, this.tileColumns/2, this.tileRows/2, 100, standardPlayerSpeed)
         console.log('player', this.player.sprite)
@@ -728,7 +728,7 @@ class ExampleGame {
 }
 
 
-class ExampleLevel {
+class ExampleIsometricLevel {
     constructor(levelString) {
         
         this.setupTiles(levelString)

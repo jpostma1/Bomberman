@@ -18,6 +18,7 @@ loadAssets(() => {
         "............c..",
         "............c..",
         "............c..",
+        "............c..",
         ".....cccccc.c..",
         "............c..",
         "...ccccc.cc.c..",
@@ -43,5 +44,8 @@ loadAssets(() => {
 
     // example2ParseSpriteSheet()
     // example3IsometricTiling(levelString)
-    example4SimpleCollision(levelString)
+    // example4SimpleCollision(levelString)
+    // exampleIsometricWithSideView(levelString)
+
+    exampleSideViewGame(levelString)
 })
