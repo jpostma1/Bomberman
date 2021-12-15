@@ -24,12 +24,6 @@ function exampleSideViewGame(lvlString) {
     app.ticker.add((deltaFrames) => {
         exampleGame.runMechanics(deltaFrames)
 
-        frames++
-        if(frames == 60) {
-            frames = 0
-            console.warn(performance.now() - last60frames)
-            last60frames = performance.now()
-        }
 
         if (keyPressed("esc")) {
             app.ticker.stop()
