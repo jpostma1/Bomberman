@@ -5,35 +5,72 @@
 
 
 const logStyles = {
-  redText: "color: red",
-  greenText: "color: green"
+    brownText: "color: brown",
+    yellowText: "color: yellow",
+    redText: "color: red",
+    greenText: "color: green"
 }
 
 
-function logGreen(message) {
-    console.log("%c"+message, logStyles.greenText)
+function logGreen(message, objMessage) {
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.greenText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.greenText)
 }
 
-function logRed(message) {
-    console.log("%c"+message, logStyles.redText)
+function logRed(message, objMessage) {
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.redText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.redText)
 }
 
-function log(message) {
-    console.log(message)
+function logYellow(message, objMessage) {
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.yellowText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.yellowText)
 }
 
-function verboseLog(message) {
-    console.log(message)
+function logBrown(message, objMessage) {
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.brownText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.brownText)
 }
 
-function debugLog(message) {
-    console.log(message)
+function log(message, objMessage) {
+    if (objMessage != undefined)
+        console.log(message, objMessage)
+    else 
+        console.log(message)
 }
 
-function importantLog(message) {
-    console.warn(message)
+function verboseLog(message, objMessage) {
+    if (objMessage != undefined)
+        console.log(message, objMessage)
+    else 
+        console.log(message)
 }
 
-function logError(message) {
-    console.error(message)
+function debugLog(message, objMessage) {
+    if (objMessage != undefined)
+        console.log(message, objMessage)
+    else 
+        console.log(message)
+}
+
+function importantLog(message, objMessage) {
+    if (objMessage != undefined)
+        console.warn(message, objMessage)
+    else 
+        console.warn(message)
+}
+
+function logError(message, objMessage) {
+    if (objMessage != undefined)
+        console.error(message, objMessage)
+    else 
+        console.error(message)
 }
