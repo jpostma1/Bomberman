@@ -54,7 +54,28 @@ function binarySearch(list, value) {
     return low
 }
 
+function forAll(enumerator, func, logInvalidEnumerator = true) {
+    if(isObject(enumerator))
+        for(var index in enumerator)
+            func(enumerator[index])
+    else if(Array.isArray(enumerator))
+        for (var i = 0; i < enumerator.length; i++)
+            func(enumerator[i])
+    else {
+        if(logInvalidEnumerator)
+            console.error("forAll: not a supported enumerator:", enumerator)
+        return -1
+    }
 
+}
+
+Array.prototype.map = function(func) {
+    var output = [];
+    for(var i = 0; i < this.length; i++)
+        output.push(func(this[i]));
+
+    return output;
+}
 
 function splitUntil(string, match, limit) { 
     var output = [];

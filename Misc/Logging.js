@@ -13,37 +13,64 @@ const logStyles = {
 
 
 function logGreen(message, objMessage) {
-    console.log("%c"+message, logStyles.greenText, objMessage)
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.greenText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.greenText)
 }
 
 function logRed(message, objMessage) {
-    console.log("%c"+message, logStyles.redText, objMessage)
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.redText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.redText)
 }
 
 function logYellow(message, objMessage) {
-    console.log("%c"+message, logStyles.yellowText, objMessage)
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.yellowText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.yellowText)
 }
 
 function logBrown(message, objMessage) {
-    console.log("%c"+message, logStyles.brownText, objMessage)
+    if (objMessage != undefined)
+        console.log("%c"+message, logStyles.brownText, objMessage)
+    else 
+        console.log("%c"+message, logStyles.brownText)
 }
 
 function log(message, objMessage) {
-    console.log(message, objMessage)
+    if (objMessage != undefined)
+        console.log(message, objMessage)
+    else 
+        console.log(message)
 }
 
 function verboseLog(message, objMessage) {
-    console.log(message, objMessage)
+    if (objMessage != undefined)
+        console.log(message, objMessage)
+    else 
+        console.log(message)
 }
 
 function debugLog(message, objMessage) {
-    console.log(message, objMessage)
+    if (objMessage != undefined)
+        console.log(message, objMessage)
+    else 
+        console.log(message)
 }
 
 function importantLog(message, objMessage) {
-    console.warn(message, objMessage)
+    if (objMessage != undefined)
+        console.warn(message, objMessage)
+    else 
+        console.warn(message)
 }
 
 function logError(message, objMessage) {
-    console.error(message, objMessage)
+    if (objMessage != undefined)
+        console.error(message, objMessage)
+    else 
+        console.error(message)
 }
