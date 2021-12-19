@@ -74,10 +74,18 @@ export function forAll(enumerator:any, func:any, logInvalidEnumerator = true) {
 
 }
 
-// Array.prototype.map = function(func:any) {
-//     var output = [];
-//     for(var i = 0; i < this.length; i++)
-//         output.push(func(this[i]));
+export function binarySearch(array:number[], value:number) {
+    //USE: Assumes a sorted array in ascending order 
+    let low = 0
+    let high = array.length
 
-//     return output;
-// }
+    while (low < high) {
+        let mid = Math.floor((low + high) / 2)
+        if (array[mid] < value) 
+            low = mid + 1
+        else 
+            high = mid
+    }
+    return low
+}
+
