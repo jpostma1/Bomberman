@@ -1,30 +1,42 @@
+import _ from "lodash"
+import { isNumber } from "lodash"
+import { addCoord, Coord, downDir, forAll, leftDir, rightDir, upDir } from "../HelperFunctions"
+import { logError, verboseLog } from "../Misc/Logging"
+import { CollisionMap } from "./CollisionMap"
 
 
 
 
 
 
-let adjacentTiles = [
+export let adjacentTiles = [
         {x:  0, y: -1},
         {x: -1, y: 0},
         {x:  1, y: 0},        
         {x:  0, y: 1},
     ]
 
-class ClaimedTerritory {
+export class ClaimedTerritory {
 
-    constructor(width, height) {
+    width:number
+    height:number
+
+
+    territory:CollisionMap
+    visited:CollisionMap
+    currentlyVisitedNum:number = 1
+
+    constructor(width:number, height:number) {
         this.width = width
         this.height = height
 
 
         this.territory = new CollisionMap(width, height)
         this.visited   = new CollisionMap(width, height)
-        this.currentlyVisitedNum = 1
     }
 
 
-    outlineMakesNewClosedTerritory(pos, id) {
+    outlineMakesNewClosedTerritory(pos:Coord, id:number) {
         let nonFriendlyTilesAroundPos = this.getOtherTilesAround(pos, id)
 
         // IMPORTANT: spots in 'visited' will be set to 'currentlyVisitedNum' when visited.
@@ -42,14 +54,14 @@ class ClaimedTerritory {
             }
         }
 
-        forAll(fillingSeeds, (pos) => this.fillClosedTerritory(pos, id))
+        forAll(fillingSeeds, (pos:Coord) => this.fillClosedTerritory(pos, id))
     }
 
-    cornersTakenInRoundTrip(ownTile, otherTile, id) {
+    cornersTakenInRoundTrip(ownTile:Coord, otherTile:Coord, id:number) {
         let cornersTaken = 0
 
-        let direction = getStartingDirection(ownTile, otherTile)
-        let startingCorner = this.scanAlongSide(otherTile, direction, id)
+        let scanDirection = getStartingDirection(ownTile, otherTile)
+        let startingCorner = this.scanAlongSide(otherTile, scanDirection, id)
         let currentCorner = this.scanAlongSide(startingCorner.pos, new ScanAroundTeritorryDirection(
                 startingCorner.scanDirection.movingDirection, 
                 startingCorner.scanDirection.edgeDirection), id)
@@ -68,34 +80,33 @@ class ClaimedTerritory {
 
 
 
-    scanAlongSide(pos, direction, id) {
+    scanAlongSide(pos:Coord, scanDirection:ScanAroundTeritorryDirection, id:number):CornerInfo {
         // keep traveling in 'direction' until a corner is reached
 
-        let freePosPlusMoveDir = addCoord(pos, direction.movingDirection)
-        let ownTilePlusMoveDir = addCoord(freePosPlusMoveDir, direction.edgeDirection)
+        let freePosPlusMoveDir = addCoord(pos, scanDirection.movingDirection)
+        let ownTilePlusMoveDir = addCoord(freePosPlusMoveDir, scanDirection.edgeDirection)
         let nextFreeTileId = this.checkTile(freePosPlusMoveDir)
         let nextOwnTileId  = this.checkTile(ownTilePlusMoveDir)
         if (nextFreeTileId == id) {
             // inner corner so stop
-            return new CornerInfo(-1, pos, direction.innerTurn())
+            scanDirection.innerTurn()
+            return new CornerInfo(-1, pos, scanDirection)
 
         } else if (nextOwnTileId == id) {
-            // path in direction is free, so move forward
-            return this.scanAlongSide(freePosPlusMoveDir, direction, id)
+            // path in scanDirection is free, so move forward
+            return this.scanAlongSide(freePosPlusMoveDir, scanDirection, id)
 
         } else {
             // outer corner so stop
-            return new CornerInfo(1, freePosPlusMoveDir, direction.outerTurn())
+            scanDirection.outerTurn()
+            return new CornerInfo(1, freePosPlusMoveDir, scanDirection)
 
         }
     }
 
-    identifyCornerType(pos, direction, id) {
-        // in or out corner
-    }
 
-    fillClosedTerritory(pos, id) {
-        let unexpanded = [pos]
+    fillClosedTerritory(pos:Coord, id:number) {
+        let unexpanded:Coord[] = [pos]
         this.setTile(pos, id)
 
         try {
@@ -104,9 +115,13 @@ class ClaimedTerritory {
             while(unexpanded.length > 0 && iterations < 1000) {
                 iterations++
 
-                let tile = unexpanded.pop()
+                // to make TS happy (unnecessary check, since unexpanded.length > 0)
+                let tempTile = unexpanded.pop()
+                if (tempTile == undefined) tempTile = {x:0, y:0}
+                // 
+                let tile:Coord = tempTile
 
-                forAll(adjacentTiles, (adj) => {
+                forAll(adjacentTiles, (adj:Coord) => {
                     let adjTile = addCoord(adj, tile)
                     let territoryId = this.checkTile(adjTile)
                     if (isNumber(territoryId) && territoryId != id) {
@@ -126,29 +141,29 @@ class ClaimedTerritory {
     }
 
 
-    setVisited(pos) {
+    setVisited(pos:Coord) {
         this.visited.setValue(pos.x, pos.y, this.currentlyVisitedNum)
     }
 
-    isVisited(pos) {
+    isVisited(pos:Coord) {
         return this.visited.checkValue(pos.x, pos.y) == this.currentlyVisitedNum
     }
 
 
-    setTile(pos, id) {
+    setTile(pos:Coord, id:number) {
         this.territory.setValue(pos.x, pos.y, id)
     }
 
-    setTileXY(x, y, id) {
+    setTileXY(x:number, y:number, id:number) {
         this.territory.setValue(x, y, id)
     }
 
-    checkTile(pos) {
+    checkTile(pos:Coord) {
         return this.territory.checkValue(pos.x, pos.y)
     }
 
 
-    getOtherTilesAround(inputPos, id) {
+    getOtherTilesAround(inputPos:Coord, id:number) {
         if (this.checkTile(inputPos) == id) {
             return adjacentTiles.filter((pos) => this.checkTile(addCoord(inputPos, pos)) != id)
         } else return []
@@ -156,7 +171,7 @@ class ClaimedTerritory {
 
 } 
 
-function getStartingDirection(ownTile, otherAdjacentTile) {
+function getStartingDirection(ownTile:Coord, otherAdjacentTile:Coord):ScanAroundTeritorryDirection {
     if (ownTile.y < otherAdjacentTile.y) 
         return new ScanAroundTeritorryDirection(rightDir, downDir)
     if (ownTile.x < otherAdjacentTile.x) 
@@ -165,12 +180,16 @@ function getStartingDirection(ownTile, otherAdjacentTile) {
         return new ScanAroundTeritorryDirection(leftDir, upDir)
     if (ownTile.x > otherAdjacentTile.x) 
         return new ScanAroundTeritorryDirection(upDir, rightDir)
-
+    
+        
     logError("getStartingDirection: corruptedInput: " + ownTile +", "+otherAdjacentTile)
+    return new ScanAroundTeritorryDirection({x:0, y:0}, {x:0, y:0})
 }
 
 class ScanAroundTeritorryDirection {
-    constructor(movingDirection, edgeDirection) {
+    movingDirection:Coord
+    edgeDirection:Coord
+    constructor(movingDirection:Coord, edgeDirection:Coord) {
         this.movingDirection = {x: movingDirection.x, y: movingDirection.y}
         this.edgeDirection = {x: edgeDirection.x, y: edgeDirection.y}
     }
@@ -179,7 +198,7 @@ class ScanAroundTeritorryDirection {
         return "moving x: " + this.movingDirection.x +", y: " + this.movingDirection.y  + " edge x: " + this.edgeDirection.x +", y: " + this.edgeDirection.y
     }
 
-    innerTurn() {
+    innerTurn():void {
         if (_.isEqual(this.movingDirection, coordAntiClockwise90D(this.edgeDirection)))
             this.turnAntiClockwise90D()
         else if (_.isEqual(this.movingDirection, coordClockwise90D(this.edgeDirection)))
@@ -189,11 +208,9 @@ class ScanAroundTeritorryDirection {
             verboseLog(this.movingDirection)
             verboseLog(this.edgeDirection)
         }
-
-        return this
     }
 
-    outerTurn() {
+    outerTurn():void {
         if (_.isEqual(this.movingDirection, coordAntiClockwise90D(this.edgeDirection)))
             this.turnClockwise90D()
         else if (_.isEqual(this.movingDirection, coordClockwise90D(this.edgeDirection)))
@@ -203,8 +220,6 @@ class ScanAroundTeritorryDirection {
             verboseLog(this.movingDirection)
             verboseLog(this.edgeDirection)
         }
-
-        return this
     }
 
     turnClockwise90D() {
@@ -218,16 +233,19 @@ class ScanAroundTeritorryDirection {
     }
 }
 
-function coordClockwise90D(coord) {
+function coordClockwise90D(coord:Coord) {
     return {x: coord.y, y: -coord.x}
 }
 
-function coordAntiClockwise90D(coord) {
+function coordAntiClockwise90D(coord:Coord) {
     return {x: -coord.y, y: coord.x}
 }
 
 class CornerInfo {
-    constructor(cornerType, pos, scanDirection) {
+    cornerType:number
+    pos:Coord
+    scanDirection:ScanAroundTeritorryDirection
+    constructor(cornerType:number, pos:Coord, scanDirection:ScanAroundTeritorryDirection) {
         this.cornerType = cornerType
         this.pos = pos
         this.scanDirection = scanDirection
