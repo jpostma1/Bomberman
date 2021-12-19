@@ -1,13 +1,11 @@
 import * as PIXI from 'pixi.js';
-import { addCoord, Coord, forAll, getFraction, magnitude, subtractCoord } from "../HelperFunctions"
-import { logYellow, verboseLog } from "../Misc/Logging"
+import { addCoord, Coord, forAll, getFraction, magnitude, removeItem, subtractCoord } from "../HelperFunctions"
+import { logRed, logYellow, verboseLog } from "../Misc/Logging"
 import { Level } from './Level';
 import { ControlSettings, Player, PlayerSkills } from './Player/Player';
 import { CollisionMap } from './CollisionMap';
-import { clone } from 'lodash';
 import { Bomb, BombManager } from './BombManager';
 import { keyJustPressed, keyJustPressedListener } from '../Input/KeyboardInput';
-import { Container } from 'pixi.js';
 import { adjacentTiles } from './ClaimedTerritory';
 
 let standardPlayerSpeed = 0.05
@@ -35,6 +33,14 @@ export let startSkills:PlayerSkills = {
     detonationTime  : 3*1000, // in ms
 }
 
+let collisionIds = {
+    empty: 0,
+    crate: 1,
+    bomb: 2,
+    bombFire:3, 
+    wall: 5,
+}
+
 export class Game {
 
     // NOTE: hacky coupling with React, for simple user interface updates
@@ -51,6 +57,7 @@ export class Game {
     players:Player[] = []
     bombManager:BombManager
     collisionMap:CollisionMap
+    bombFirePositions:Coord[] = []
 
     unaccountedDeltaTime:number
     constructor(app:PIXI.Application, levelString:string[]) {
@@ -71,12 +78,12 @@ export class Game {
     }
 
     addPlayers() {
-        let player = new Player(this.tileColumns/2, this.tileRows/2, 
+        let player = new Player("P1", this.tileColumns/2, this.tileRows/2, 
             wasdControls,
             startSkills,  
             this.level.stage)
 
-        let otherPlayer = new Player(this.tileColumns/2+10, this.tileRows/2, 
+        let otherPlayer = new Player("P2", this.tileColumns/2+10, this.tileRows/2, 
             arrowControls, 
             startSkills,  
             this.level.stage)
@@ -95,15 +102,21 @@ export class Game {
             forAll(this.players, (player:Player) => {
                 if (keyJustPressed(event, player.controls.placeBomb)) {
                     if (player.canPlaceBomb()) {
-                        this.bombManager.placeBomb(player)
+                        this.placeBomb(player)
                     }
                 }
             })
         })
     }
 
+    placeBomb(player:Player) {
+        this.collisionMap.setCoord(player.currentTile, collisionIds.bomb)
+        this.bombManager.placeBomb(player)
+    }
+
     killPlayer(player:Player) {
-        logYellow("player killed!!", player)
+        player.kill()
+        removeItem(this.players, player)
     }
 
     handleExplosion(bomb:Bomb) {
@@ -114,22 +127,39 @@ export class Game {
         })
 
         // TODO: remove items in the line of fire
+        
         forAll(hitTiles, (pos:Coord) => {
             forAll(this.players, (player:Player) => {
-                if (magnitude(subtractCoord(pos, { x:player.x, y:player.y })) < 1)
+                console.log(magnitude(subtractCoord(pos, { x:player.x, y:player.y })), pos, subtractCoord(pos, { x:player.x, y:player.y }))
+
+                if (magnitude(subtractCoord(pos, { x:player.x, y:player.y })) < 1-player.speed) {
                     this.killPlayer(player)
+                }
             })
+            
+            this.bombManager.chainReaction(pos)
 
             if (this.collisionMap.getCoordValue(pos) == 1) {
-                    this.removeCrate(pos)
+                this.removeCrate(pos)
             }
+            
+            this.bombFirePositions.push(pos)
         })
-
     }
 
     removeCrate(pos:Coord) {
-        this.collisionMap.setCoord(pos, 0)
+        // can't erase crate collision yet, since a chainreaction could then penetrate multiple crates. Among other artifacts
+        this.collisionMap.setCoord(pos, collisionIds.bombFire)
         this.level.removeCrate(pos)
+    }
+
+    clearBombFire() {
+        // remove bomb fire
+        forAll(this.bombFirePositions, (pos:Coord) => {
+            this.collisionMap.setCoord(pos, collisionIds.empty)
+        })
+        
+        this.bombFirePositions.length = 0
     }
 
     scanLine(accumulator:Coord[], pos:Coord, direction:Coord, distance:number) :Coord[] {
@@ -138,11 +168,12 @@ export class Game {
 
         let tileId = this.collisionMap.getCoordValue(pos)
         if (tileId > 0) {
-            if (tileId == 1)
+            if (tileId < collisionIds.wall)
                 accumulator.push(pos)
 
             return accumulator
         } else {
+            accumulator.push(pos)
             // path in direction is free, so move forward
             return this.scanLine(accumulator, addCoord(pos, direction), direction, distance - 1)
         }
@@ -164,15 +195,11 @@ export class Game {
                     break;
 
                     case 'c':
-                        this.collisionMap.setValue(x, y, 1)
-                    break;
-
-                    case 'C':
-                        this.collisionMap.setValue(x, y, 2)
+                        this.collisionMap.setValue(x, y, collisionIds.crate)
                     break;
 
                     case 'w':
-                        this.collisionMap.setValue(x, y, 5)
+                        this.collisionMap.setValue(x, y, collisionIds.wall)
                     break;
                 }
             }
@@ -180,6 +207,14 @@ export class Game {
     }
 
     runMechanics(newDelta:number) {
+        if (this.players.length <= 1) {
+            this.reactComponent.gameOver(this.players)
+            return
+        }
+
+        this.clearBombFire() 
+            
+
         let currentDelta = this.unaccountedDeltaTime+newDelta
         
         forAll(this.players, (player:Player) => {
@@ -222,9 +257,6 @@ export class Game {
 
         if (player.targetTile != undefined) {
             player.moveToTargetTile()
-            
-
-            this.reactComponent.gamePokes()
         }
 
         this.keepPlayerInLevel(player)

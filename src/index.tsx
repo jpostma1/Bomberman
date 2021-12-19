@@ -6,6 +6,8 @@ import { keyPressed } from './Input/KeyboardInput';
 import { Game } from './GameLogic/Game';
 import { debugLog, logYellow, verboseLog } from './Misc/Logging';
 import { loadAssets } from './Rendering/LoadAssets';
+import { Player } from './GameLogic/Player/Player';
+import { forAll } from './HelperFunctions';
 
 
 
@@ -92,33 +94,52 @@ function setupGame(lvlString:string[]):Game {
 
 
 interface GameState {
-    game:Game    
+    game:Game
+    
 }
 
 interface GameReporterState {
-    value:number 
+    gameOver:boolean
+    winner:string
 }
 
+// hacky component for a quick GUI 
 class GameReporter extends React.Component {
     constructor() {
         super({})
 
-        this.state = {value: 0}
+        this.state = {
+            gameOver: false,
+            winner: "No winner!"
+        }
 
         game.setReactComponent(this)
     }
     props:GameState
     state:GameReporterState
 
-  gamePokes() {
-    
-    this.setState(this.state);
-  }
-  render() {
-      return (
-        <div>
-          <span>P1.x = {this.state.value}</span>
-        </div>
-      );
-  }
+    gameOver(players:Player[]) {
+        this.state.gameOver = true
+        forAll(players, (player:Player) => {
+            if (player.alive)
+                this.state.winner = player.name +" wins!"
+        })
+        this.setState(this.state)
+    }
+
+    gamePokes() {
+        this.setState(this.state);
+    }
+    render() {
+        return (
+            <div>
+                <div style={{ display: this.state.gameOver ? "block" : "none" }}>
+                    <h1>GameOver! </h1>
+                    <h2 color="green">{this.state.winner}</h2>
+                </div>
+                
+            </div>
+        );
+    }
 };
+

@@ -1,6 +1,6 @@
-import { clone } from "lodash";
+import { clone, isEqual } from "lodash";
 import { Container, Sprite } from "pixi.js";
-import { Coord } from "../HelperFunctions";
+import { Coord, forAll, removeItem } from "../HelperFunctions";
 import { IDPool } from "../Misc/idPool";
 import { getBombSprite, getTileHeight, getTileWidth } from "../Rendering/DrawFunctions";
 import { Game } from "./Game";
@@ -18,9 +18,10 @@ import { Player, PlayerSkills } from "./Player/Player";
 
 
 export class BombManager {
-
+    
     idPool = new IDPool()
 
+    bombs:Bomb[] = []
     bombSprites:Sprite[] = []
     stage:SideViewStage
 
@@ -51,15 +52,26 @@ export class BombManager {
             player.currentTile.x * getTileWidth(), 
             player.currentTile.y * getTileHeight())
         sprite.zIndex = this.stage.getBombZIndexFromY(sprite.y)
-        
 
+        this.bombs.push(new Bomb(this, player.currentTile, player.skills, id))
+    }
 
-        new Bomb(this, player.currentTile, player.skills, id)
+    chainReaction(pos: Coord) {
+        for(let i = 0; i < this.bombs.length; i++) {
+            let bomb = this.bombs[i]
+            if (isEqual(bomb.pos, pos)) {
+                // since bomb is removed
+                i--;   
+                bomb.explode()
+            }
+        }
+                
     }
 
     explode(bomb:Bomb) {
         this.bombSprites[bomb.id].visible = false
         this.idPool.setIdle(bomb.id)
+        removeItem(this.bombs, bomb)
 
         this.handleExplosion(bomb)
     }
@@ -72,6 +84,8 @@ export class Bomb {
 
     id:number
 
+    // Timeout type won't give, for now, any instead
+    callBack:any
     manager:BombManager
     constructor (manager:BombManager, pos:Coord, skills:PlayerSkills, id:number) {
         this.manager = manager
@@ -82,11 +96,12 @@ export class Bomb {
         this.id = id
 
         // NOTE: gets corrupted when game is paused!!
-        setTimeout(() => this.explode(), skills.detonationTime)
+        this.callBack = setTimeout(() => this.explode(), skills.detonationTime)
     }
 
     explode() {
-        console.warn("explode!!")
+        // incase the bomb is triggered by a chain reaction
+        clearTimeout(this.callBack)
 
         this.manager.explode(this)
     }

@@ -74,6 +74,15 @@ export function forAll(enumerator:any, func:any, logInvalidEnumerator = true) {
 
 }
 
+export function removeItem<Item>(array:Item[], item:Item) {
+    for (let i = 0; i < array.length; i++) {
+        if (array[i] == item) {
+            array.splice(i, 1)
+            break
+        }
+    }
+}
+
 export function binarySearch(array:number[], value:number) {
     //USE: Assumes a sorted array in ascending order 
     let low = 0

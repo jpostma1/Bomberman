@@ -54,7 +54,10 @@ export class Player {
     skills:PlayerSkills
     state:PlayerState
 
-    constructor(x:number, y:number, controls:ControlSettings, skills:PlayerSkills, lvlStage:SideViewStage) {
+    name:string
+    alive:boolean = true
+    constructor(name:string, x:number, y:number, controls:ControlSettings, skills:PlayerSkills, lvlStage:SideViewStage) {
+        this.name = name
         this.x = x
         this.y = y
 
@@ -75,6 +78,13 @@ export class Player {
 
         this.updateCurrentTile()
         this.setupSprite()
+
+    }
+
+    kill() {
+        this.alive = false
+        this.sprite.visible = false
+        this.targetSprite.visible = false
 
     }
 
