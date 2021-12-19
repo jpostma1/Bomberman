@@ -30,7 +30,7 @@ export class CollisionMap {
         this.collisionMap[Math.floor(coord.x)][Math.floor(coord.y)] = value
     }
     
-    getCoord(coord:Coord) {
+    getCoordValue(coord:Coord) {
         return this.collisionMap[Math.floor(coord.x)][Math.floor(coord.y)]
     }
 

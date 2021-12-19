@@ -111,7 +111,7 @@ class GameReporter extends React.Component {
     state:GameReporterState
 
   gamePokes() {
-    this.state.value = game.player.x
+    
     this.setState(this.state);
   }
   render() {

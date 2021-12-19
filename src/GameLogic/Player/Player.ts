@@ -1,9 +1,8 @@
-import * as PIXI from 'pixi.js';
-import { BaseTexture } from "pixi.js"
-import { CollisionMap } from "../../GameLogic/CollisionMap"
-import { Coord, isNumber, leftDir, rightDir, upDir, downDir, sign, addCoord, getFraction, magnitude, subtractCoord, centerCoord, center } from "../../HelperFunctions"
+import { clone } from 'lodash';
+import { Sprite } from 'pixi.js';
+import { Coord, leftDir, rightDir, upDir, downDir, sign, addCoord } from "../../HelperFunctions"
 import { keyPressed } from "../../Input/KeyboardInput"
-import { getAnimationFrameRectangle } from "../../Rendering/LoadAssets"
+import { getTileSprite, getWallSprite } from '../../Rendering/DrawFunctions';
 import { SideViewStage } from '../Level'
 
 
@@ -11,11 +10,27 @@ import { SideViewStage } from '../Level'
 let yDistortion = 2
 
 
+export interface PlayerSkills {
+    speed           : number
+
+    // bomb related
+    maxBombs        : number
+    bombPower       : number
+    reloadTime      : number
+    detonationTime  : number
+}
+
+export interface PlayerState {
+    bombs           : number
+    lastBombPlanted : number
+}
+
 export interface ControlSettings {
     keyLeft  :string
     keyRight :string
     keyUp    :string
     keyDown  :string
+    placeBomb:string
 }
 
 export class Player {
@@ -29,30 +44,25 @@ export class Player {
     secondaryMovingDirection?:Coord
     tabuDirection?:Coord
 
-    speed:number
-
     lvlStage:SideViewStage
 
-    targetSprite:PIXI.Sprite
-    sprite:PIXI.Sprite
+    targetSprite:Sprite
+    sprite:Sprite
 
     controls:ControlSettings
 
-    constructor(x:number, y:number, lvlStage:SideViewStage, controls:ControlSettings, zIndex = 0, speed = 1) {
+    skills:PlayerSkills
+    state:PlayerState
+
+    constructor(x:number, y:number, controls:ControlSettings, skills:PlayerSkills, lvlStage:SideViewStage) {
         this.x = x
         this.y = y
-        if (!isNumber(this.x)) {
-            // logError("ExamplePlayer: x is not a number:")
-            // logError(this.x)
-        }
-        if (!isNumber(this.y)) {
-            // logError("ExamplePlayer: y is not a number:")
-            // logError(this.y)
-        }
+
+        this.skills = clone(skills)
+        this.resetState()
 
         this.controls = controls
 
-        this.speed = speed
 
         // These values can be 'unset' instead of using a seperate boolean for each I've used undefined to check if they are set. 
         this.targetTile = undefined
@@ -64,49 +74,32 @@ export class Player {
         this.lvlStage = lvlStage
 
         this.updateCurrentTile()
-        this.setupSprite(zIndex)
+        this.setupSprite()
+
     }
 
-    setupSprite(zIndex:number) {
-        // hardcoded tile sheet info
-        const allTilesTexture:PIXI.BaseTexture = PIXI.BaseTexture.from('tilesFromSide')
-        let sheetWidth = 7
-        let sheetHeight = 1
-        // ===========  ==============
-        const targetSpriteTexture = new PIXI.Texture(allTilesTexture,
-                    getAnimationFrameRectangle(allTilesTexture, 
-                        sheetWidth, 
-                        sheetHeight*2, 
-                        //tile column
-                        1,
-                        //tile row
-                        0
-                        ))
-        this.targetSprite = new PIXI.Sprite(targetSpriteTexture)
-        this.targetSprite.scale.set(0.5,0.5)
+    canPlaceBomb() {
+        // potentially put a timer between bomb placements
+        return this.state.bombs > 0
+    }
+
+    public get speed() {
+        return this.skills.speed
+    }
+    
+    resetState() {
+        this.state = { 
+            bombs: this.skills.maxBombs,
+            lastBombPlanted: 0,
+        }
+    }
+
+    setupSprite() {
+        // =========== debug ==============
+        this.targetSprite = getTileSprite(1, 0, true)
         // =========================
 
-
-
-        const texture = new PIXI.Texture(allTilesTexture,
-                    getAnimationFrameRectangle(allTilesTexture, 
-                        sheetWidth, 
-                        sheetHeight, 
-                        //tile column
-                        4,
-                        //tile row
-                        0
-                        ))
-        // const texture = PIXI.Texture.from('bunny')
-        this.sprite = new PIXI.Sprite(texture)
-
-
-        this.sprite.scale.set(0.5,0.5)
-        // this.sprite.scale.set(1,0.65)
-
-
-
-        this.sprite.zIndex = zIndex
+        this.sprite = getWallSprite()
     }
 
     setX(x:number) {
@@ -128,21 +121,25 @@ export class Player {
             return
 
         if (this.targetTile.x != this.x) {
-            if (Math.abs(this.x - this.targetTile.x) < this.speed) {
+            const targetDX = this.targetTile.x - this.x
+
+            if (Math.abs(targetDX) < this.speed) {
                 this.setX(this.targetTile.x)
                 this.targetTile = undefined
             } else {
-                this.moveX(sign(this.targetTile.x - this.x)*this.speed)
+                this.moveX(sign(targetDX) * this.speed)
             }
+
         } else if (this.targetTile.y != this.y) {
-            // TODO: put and its related logic in the LevelStage Class
-            if (Math.abs(this.y - this.targetTile.y) < this.speed*yDistortion) {
+            const targetDY = this.targetTile.y - this.y
+
+            if (Math.abs(targetDY) < this.speed*yDistortion) {
                 this.setY(this.targetTile.y)
                 this.targetTile = undefined
             } else {
-                // TODO: put and its related logic in the LevelStage Class
-                this.moveY(sign(this.targetTile.y - this.y)*this.speed*yDistortion)
+                this.moveY(sign(targetDY) * this.speed*yDistortion)
             }
+
         } else 
             this.targetTile = undefined
         
@@ -153,7 +150,7 @@ export class Player {
     updateSpritePos() {
         this.sprite.x = this.lvlStage.toScreenCoordX(this.x)
         this.sprite.y = this.lvlStage.toScreenCoordY(this.y)
-        this.sprite.zIndex = this.lvlStage.getZIndexFromY(this.y)
+        this.sprite.zIndex = this.lvlStage.getPlayerZIndexFromY(this.y)
         this.targetSprite.zIndex = this.sprite.zIndex-1
 
         if(this.targetTile != undefined) {
@@ -261,8 +258,10 @@ export class Player {
     }
 
     alingedWith(tile:Coord) {
-        // TODO: put and its related logic in the LevelStage Class
-        return Math.abs(this.x - tile.x) < this.speed || Math.abs(this.y - tile.y) < this.speed * yDistortion
+        let dx = Math.abs(this.x - tile.x)
+        let dy = Math.abs(this.y - tile.y)
+
+        return dx < this.speed || dy < this.speed * yDistortion
     }
 
     updateCurrentTile() {

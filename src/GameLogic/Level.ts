@@ -1,5 +1,9 @@
-import { getAnimationFrameRectangle } from "../Rendering/LoadAssets"
-import * as PIXI from 'pixi.js';
+
+import { getCrateSprite, getTileHeight, getTileWidth, getWallSprite } from "../Rendering/DrawFunctions";
+ 
+import { Sprite, Container } from "pixi.js";
+import { Coord } from "../HelperFunctions";
+
 
 export class SideViewStage {
     
@@ -8,7 +12,14 @@ export class SideViewStage {
 
     zIndexRowOffset:number = 10
     playerZOffset:number = 1
-    constructor(tileWidth:number, tileHeight:number) {
+    bombZOffset:number = 2
+
+    container:Container 
+    constructor(tileColumns:number, tileRows:number,  tileWidth:number, tileHeight:number) {
+        this.container = new Container()
+        this.container.width  = tileColumns * getTileWidth()
+        this.container.height = tileRows * getTileHeight()
+
         this.tileWidth  = tileWidth
         this.tileHeight = tileHeight
     }
@@ -20,17 +31,33 @@ export class SideViewStage {
     toScreenCoordY(y:number) {
         return y * this.tileHeight
     }
+    getTileZIndexFromY(y: number): number {
+        return Math.floor(y) * this.zIndexRowOffset
+    }
 
-    getZIndexFromY(y: number): number {
-        return Math.floor(y)*this.zIndexRowOffset+this.playerZOffset
+    getPlayerZIndexFromY(y: number): number {
+        return Math.floor(y) * this.zIndexRowOffset+this.playerZOffset
+    }
+
+    getBombZIndexFromY(y: number): number {
+        return Math.floor(y) * this.zIndexRowOffset+this.bombZOffset
+    }
+
+    addChild(child:Sprite) {
+        this.container.addChild(child)
+    }
+
+    removeChild(child:Sprite) {
+        this.container.removeChild(child)
     }
 }
 
 export class Level {
-    tiles: PIXI.Sprite[][]
+    
+    tiles: Sprite[][]
     currentZIndex: number
 
-    container:PIXI.Container
+    
     stage:SideViewStage
 
     constructor(levelString:string[]) {
@@ -40,96 +67,54 @@ export class Level {
     }
 
     addChild(child:any) {
-        this.container.addChild(child)
+        this.stage.addChild(child)
+    }
+
+    removeCrate(pos: Coord) {
+        // I want this to crash incase the tile doesn't exist, instead of a silient error
+        let tile = this.tiles[pos.x][pos.y]
+        if (tile != undefined) {
+            this.stage.removeChild(tile)
+        }
     }
 
     setupTiles(levelString:string[]) {
-        this.container = new PIXI.Container()
         this.tiles = []
         this.currentZIndex = 0
 
-        // hardcoded tile sheet info
-        const allTilesTexture = PIXI.BaseTexture.from('tilesFromSide')
-        let sheetWidth = 7
-        let sheetHeight = 1
-
-        let scale = 1/2
-        let tileWidth  = Math.floor((allTilesTexture.width /sheetWidth) *scale)
-        let tileHeight = Math.floor((allTilesTexture.height/sheetHeight)*scale/2)
-
-        this.stage = new SideViewStage(tileWidth, tileHeight)
+        
 
         let tileColumns = levelString.length
         let tileRows    = levelString[0].length
+        this.stage = new SideViewStage(tileColumns, tileRows, getTileWidth(), getTileHeight())
 
-        this.container.width  = tileColumns * tileWidth
-        this.container.height = tileRows * tileHeight
-
-        let texture;
-        for(let x = 0; x < levelString.length; x++) {
+        for (let x = 0; x < levelString.length; x++) {
             this.tiles[x] = []
-            for(let y = 0; y < levelString[x].length; y++) {
-                switch(levelString[x][y]) {
+            for (let y = 0; y < levelString[x].length; y++) {
+                switch (levelString[x][y]) {
 
                     case '.':
-                        // texture = new PIXI.Texture(
-                        //     allTilesTexture, 
-                        //     getAnimationFrameRectangle(allTilesTexture, 
-                        //             sheetWidth, 
-                        //             sheetHeight, 
-                        //             //tile column
-                        //             0,
-                        //             //tile row
-                        //             0
-                        //             )
-                        //     )
-                        texture = undefined
+                        // 
                     break;
+
                     case 'c':
-                        texture = new PIXI.Texture(
-                            allTilesTexture, 
-                            getAnimationFrameRectangle(allTilesTexture, 
-                                    sheetWidth, 
-                                    sheetHeight, 
-                                    //tile column
-                                    2,
-                                    //tile row
-                                    0
-                                    )
-                            )
+                        this.newTile(x, y, getCrateSprite())
                     break;
+
                     case 'w':
-                        texture = new PIXI.Texture(
-                            allTilesTexture, 
-                            getAnimationFrameRectangle(allTilesTexture, 
-                                    sheetWidth, 
-                                    sheetHeight, 
-                                    //tile column
-                                    4,
-                                    //tile row
-                                    0
-                                    )
-                            )
+                        this.newTile(x, y, getWallSprite())
                     break;
 
                 }
-                
-                this.newTile(x, y, tileWidth, tileHeight,  y*this.stage.zIndexRowOffset, scale, texture)
             }
         }
-
     }
 
-    newTile(x:number, y:number, tileWidth:number, tileHeight:number, zIndex:number, scale:number, texture?:PIXI.Texture) {
-        
-        const tile = new PIXI.Sprite(texture)
-        tile.scale.set(scale, scale);
-        tile.x = x * tileWidth
-        tile.y = y * tileHeight
-        
-        // tile.anchor._x = 0.5 
-        // tile.anchor._y = 0.5
-        tile.zIndex = zIndex
+    newTile(x:number, y:number, tile:Sprite) {
+        tile.x = x * getTileWidth()
+        tile.y = y * getTileHeight()
+        tile.zIndex = this.stage.getTileZIndexFromY(y)
+
         this.addChild(tile)
         this.tiles[x][y] = tile
     }
