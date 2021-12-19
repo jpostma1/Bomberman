@@ -13,12 +13,12 @@ export function loadAssets(onComplete:any) {
     PIXI.settings.SORTABLE_CHILDREN = true
 
 
-    loader.add('bunny', 'Assets/bunny.png')
-    loader.add('tilesFromSide', 'Assets/tilesFromSide.png')
-    loader.add('isometricTRPGPack', 'Assets/IsometricTRPGAssetPack_Entities.png');
-    loader.add('isometricTiles', 'Assets/Isometric_MedievalFantasy_Tiles.png');
+    loader.add("bunny", "Assets/bunny.png")
+    loader.add("tileSheet", "Assets/tilesFromSide.png")
+    loader.add("isometricTRPGPack", "Assets/IsometricTRPGAssetPack_Entities.png");
+    loader.add("isometricTiles", "Assets/Isometric_MedievalFantasy_Tiles.png");
+    loader.add("bombSheet", "Assets/sample_bombtextures.png")
 
-    console.log("loadAssets log 21:26")
 
     loader.load()
     loader.onComplete.add(onComplete)
