@@ -13,6 +13,10 @@ export function getWallSprite():Sprite {
     return getTileSprite(4, 0)
 }
 
+export function getFloorSprite():Sprite {
+    return getTileSprite(0, 0)
+}
+
 
 export function getBombSprite() : Sprite {
     // hardcoded tile sheet info

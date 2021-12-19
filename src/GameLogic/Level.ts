@@ -1,5 +1,5 @@
 
-import { getCrateSprite, getTileHeight, getTileWidth, getWallSprite } from "../Rendering/DrawFunctions";
+import { getCrateSprite, getFloorSprite, getTileHeight, getTileWidth, getWallSprite } from "../Rendering/DrawFunctions";
  
 import { Sprite, Container } from "pixi.js";
 import { Coord } from "../HelperFunctions";
@@ -99,7 +99,9 @@ export class Level {
                 switch (levelString[x][y]) {
 
                     case '.':
-                        // 
+                        let floorTile = getFloorSprite()
+                        floorTile.alpha = 0.2
+                        this.newTile(x, y, floorTile)
                     break;
 
                     case 'c':

@@ -99,3 +99,17 @@ export function binarySearch(array:number[], value:number) {
     return low
 }
 
+// assumes a none empty list
+export function maximumBy<T>(list:T[], compareFunc:(item:T) => number):T {
+    let maxI = 0
+    let maxValue = Number.MIN_VALUE
+    for (var i = 0; i < list.length; i++) {
+        let value = compareFunc(list[i])
+        if (maxValue < value) {
+            maxI = i
+            maxValue = value
+        }  
+    }
+
+    return list[maxI]
+}

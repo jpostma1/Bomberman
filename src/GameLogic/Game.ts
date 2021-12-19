@@ -1,11 +1,11 @@
-import { addCoord, Coord, forAll, getFraction, removeItem } from "../HelperFunctions"
+import { addCoord, Coord, forAll, getFraction, maximumBy, removeItem } from "../HelperFunctions"
 import { logRed, logYellow, verboseLog } from "../Misc/Logging"
 import { Level } from './Level';
 import { ControlSettings, Player, PlayerSkills } from './Player/Player';
 import { CollisionMap } from './CollisionMap';
 import { Bomb, BombManager } from './BombManager';
 import { keyJustPressed, keyJustPressedListener } from '../Input/KeyboardInput';
-import { adjacentTiles } from './ClaimedTerritory';
+import { adjacentTiles, ClaimedTerritory } from './ClaimedTerritory';
 import { ItemManager, ItemSettings } from './ItemManager';
 import { Application } from 'pixi.js';
 
@@ -36,15 +36,23 @@ export let startSkills:PlayerSkills = {
     detonationTime  : 3*1000, // in ms
 }
 
+export interface GameSettings {
+    lengthInSeconds     : number
+}
+let gameSettings:GameSettings = {
+    lengthInSeconds: 60 //3*60 
+}
+
 let itemSettings:ItemSettings = {
+    // the chances are relative to each other
     extraBombChance       : 10,
     extraSpeedChance      : 10,
     extraFirePowerChance  : 10,
-    extraLifeChance       : 100,
+    extraLifeChance       : 10,
     lessBombChance        : 10,
     lessSpeedChance       : 10,
     lessFirePowerChance   : 10,
-    lessLifeChance        : 50,
+    lessLifeChance        : 10,
 
     speedBoost      : standardPlayerSpeed/4,
     minBombPower    : 2,
@@ -71,7 +79,7 @@ export class Game {
         this.reactComponent = reactComponent    
     }
 
-    reactComponent:any 
+    reactComponent:any
 
     tileColumns:number
     tileRows:number
@@ -81,9 +89,13 @@ export class Game {
     bombManager:BombManager
     itemManager:ItemManager
     collisionMap:CollisionMap
+    claimedTerritory:ClaimedTerritory
     bombFirePositions:Coord[] = []
-    
+
+
+    gameOver:boolean = false
     unaccountedDeltaTime:number = 0
+    startingTime:number = performance.now()
     constructor(app:Application, levelString:string[]) {
         this.tileColumns = levelString.length
         this.tileRows = levelString[0].length
@@ -93,29 +105,50 @@ export class Game {
         this.bombManager = new BombManager((bomb) => this.handleExplosion(bomb), this.level.stage)
         app.stage.addChild(this.level.stage.container)
         this.itemManager = new ItemManager(this.level.stage, itemSettings)
-    
+        this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
+
         this.addPlayers()
         this.setupCollisionMap(levelString)
     }
 
+    getWinnerMessage() {
+        let alivePlayers = this.players.filter(p => p.alive)
+
+        
+        if (alivePlayers.length > 0) {
+            // TODO: fix: rare case of a draw on claimed tiles will appoint first player ':)
+            let winner = maximumBy(alivePlayers, (player:Player) => this.claimedTerritory.countClaimedTiles(player.id))
+            return winner.name
+        }
+
+        return "No winner!"
+    }
+
     runMechanics(newDelta:number) {
-        if (this.playersAlive() <= 1) {
-            this.reactComponent.gameOver(this.players)
+        if (this.isGameOver()) {
+            if (!this.gameOver)
+                this.reactComponent.gameOver(this.getWinnerMessage())
+            this.gameOver = true
             return
         }
-        this.clearBombFire() 
+
+        this.clearBombFire()
             
+        // NOTE: probably better if this has a max, compensating a lagg spike of > 1 sec would only mess up the game
         let currentDelta = this.unaccountedDeltaTime+newDelta
         
         forAll(this.players, (player:Player) => {
             // to pass a member function requires a lambda, otherwise 'this' isn't bound correctly 
             player.prepForUpdate((pos:Coord) => this.collides(pos))
-
-            // update
-            for (let i = 0; i < currentDelta; i++)
-                this.checkPlayerCollision(player)
-
         })
+
+        // update
+        for (let i = 0; i < currentDelta; i++) {
+            forAll(this.players, (player:Player) => {
+                this.checkPlayerCollision(player)
+                this.claimTile(player)
+            })
+        }
         
         this.itemManager.pickupItems(this.players)
         
@@ -124,13 +157,29 @@ export class Game {
         this.unaccountedDeltaTime = getFraction(currentDelta)
     }
 
+    claimTile(player:Player) {
+        let currentTile = player.currentTile
+        this.claimedTerritory.setTileXY(currentTile.x, currentTile.y, player.id)
+        let outlineBonusTerritory:Coord[] = this.claimedTerritory.outlineMakesNewClosedTerritory(currentTile, player.id)
+        outlineBonusTerritory.push(currentTile)
+        forAll(outlineBonusTerritory, (pos:Coord) => this.level.tiles[pos.x][pos.y].tint = player.tint)
+    }
+
+    isGameOver() {
+        return this.getSecondsLeft() <= 0 || this.playersAlive() <= 1
+    }
+
     addPlayers() {
-        let player = new Player("P1", this.tileColumns/2, this.tileRows/2, 
+        let player = new Player("P1", 0xFF0000, 
+            Math.floor(this.tileColumns/2), 
+            Math.floor(this.tileRows/2), 
             wasdControls,
             startSkills,  
             this.level.stage)
 
-        let otherPlayer = new Player("P2", this.tileColumns/2+10, this.tileRows/2, 
+        let otherPlayer = new Player("P2", 0x0000FF, 
+            Math.floor(this.tileColumns/2+10), 
+            Math.floor(this.tileRows/2), 
             arrowControls, 
             startSkills,  
             this.level.stage)
@@ -290,7 +339,14 @@ export class Game {
             player.y = 0 + tileMarge
     }
 
+    getSecondsLeft() {
+        return gameSettings.lengthInSeconds - (performance.now() - this.startingTime) / 1000
+    }
+
     readyForRender() {
+        // update clock
+        this.reactComponent.updateClock(this.getSecondsLeft())
+
         forAll(this.players, (player:Player) => player.updateSpritePos())
     }
 }

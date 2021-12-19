@@ -34,10 +34,13 @@ export interface ControlSettings {
     placeBomb:string
 }
 
+let currentPlayerId:number = 1
 export class Player {
 
     x:number
     y:number
+    id:number
+    tint:number
 
     currentTile:Coord
     targetTile?:Coord
@@ -57,16 +60,17 @@ export class Player {
 
     name:string
     alive:boolean = true
-    constructor(name:string, x:number, y:number, controls:ControlSettings, skills:PlayerSkills, lvlStage:SideViewStage) {
+    constructor(name:string, tint:number, x:number, y:number, controls:ControlSettings, skills:PlayerSkills, lvlStage:SideViewStage) {
         this.name = name
         this.x = x
         this.y = y
+        this.id = currentPlayerId++
 
         this.skills = clone(skills)
         this.resetState()
 
         this.controls = controls
-
+        this.tint = tint
 
         // These values can be 'unset' instead of using a seperate boolean for each I've used undefined to check if they are set. 
         this.targetTile = undefined

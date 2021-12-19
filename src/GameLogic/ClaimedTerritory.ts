@@ -36,7 +36,7 @@ export class ClaimedTerritory {
     }
 
 
-    outlineMakesNewClosedTerritory(pos:Coord, id:number) {
+    outlineMakesNewClosedTerritory(pos:Coord, id:number):Coord[] {
         let nonFriendlyTilesAroundPos = this.getOtherTilesAround(pos, id)
 
         // IMPORTANT: spots in 'visited' will be set to 'currentlyVisitedNum' when visited.
@@ -54,7 +54,14 @@ export class ClaimedTerritory {
             }
         }
 
-        forAll(fillingSeeds, (pos:Coord) => this.fillClosedTerritory(pos, id))
+        let claimedTiles:Coord[] = []
+        forAll(fillingSeeds, (pos:Coord) => 
+            forAll(this.fillClosedTerritory(pos, id), 
+                (newClaimedTile:Coord) => claimedTiles.push(newClaimedTile)
+            )
+        )
+
+        return claimedTiles
     }
 
     cornersTakenInRoundTrip(ownTile:Coord, otherTile:Coord, id:number) {
@@ -105,10 +112,10 @@ export class ClaimedTerritory {
     }
 
 
-    fillClosedTerritory(pos:Coord, id:number) {
+    fillClosedTerritory(pos:Coord, id:number):Coord[] {
         let unexpanded:Coord[] = [pos]
         this.setTile(pos, id)
-
+        let filledTiles:Coord[] = [pos]
         try {
             // extra infinite loop prevention
             let iterations = 0
@@ -127,6 +134,7 @@ export class ClaimedTerritory {
                     if (isNumber(territoryId) && territoryId != id) {
                         this.setTile(adjTile, id)
                         unexpanded.push(adjTile)
+                        filledTiles.push(adjTile)
                     }
                 })
             }
@@ -138,14 +146,27 @@ export class ClaimedTerritory {
             logError("fillClosedTerritory catch: ", e)
         }
 
+        return filledTiles
     }
 
+    countClaimedTiles(id:number) :number {
+        let count:number = 0
+
+        for (let x = 0; x < this.width; x++) {
+            for (let y = 0; y < this.height; y++) {
+                if (this.checkTile({x:x, y:y}) == id)
+                    count++
+            }
+        }
+
+        return count
+    }
 
     setVisited(pos:Coord) {
         this.visited.setValue(pos.x, pos.y, this.currentlyVisitedNum)
     }
 
-    isVisited(pos:Coord) {
+    isVisited(pos:Coord):boolean {
         return this.visited.checkValue(pos.x, pos.y) == this.currentlyVisitedNum
     }
 
@@ -158,7 +179,7 @@ export class ClaimedTerritory {
         this.territory.setValue(x, y, id)
     }
 
-    checkTile(pos:Coord) {
+    checkTile(pos:Coord):number {
         return this.territory.checkValue(pos.x, pos.y)
     }
 

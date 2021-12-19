@@ -16,34 +16,35 @@ let game:Game
 loadAssets(() => {
 
     var levelString = [
-        "............cwcwcwcwcwcwcwcwcwcwcwcwcwcwcwccw",
-        "............c.c.c.c.c.c.........c.c.c.c.c.ccw",
-        "............c.cwcwcwcwc.cwcwcwc.cwcwcwcwcwccw",
-        "............cwcwc.......cwcwcwc.cwcwcwcwcwccw",
-        "............c.c.c.c.c.c.c.c.c.c.c.c.c.c.c.ccw",
-        "............cwcwc.cwc.c.c.c.cwc.cwcwcwcwcwccw",
-        "............c.c.c.c.c.c.........c.c.c.c.c.ccw",
-        "............cwcwc.cwc.c.cwcwcwc.cwcwcwcwcwccw",
-        ".....cccccc.c.c.c.c.c.c.c.c.....c.c.c.c.c.ccw",
-        "............cwcwc.cwcwcwcwc.cwcwc.cwcwcwcwccw",
-        "...ccccc.cc.c.c.c.c.c.c.c.c.....c.c.c.c.c.ccw",
-        ".......c.cc.cwcwc.c..wcwcwc.cwc.c.cwcwcwcwccw",
-        "...ccc.c.cc.c.c.c.c.........c.c.c.c.c.c.c.ccw",
-        ".....c.c....cwc.....cwc.cwc.cwc.c.cwcwcwcwccw",
-        "...ccc......c.c.c.c.c.......c.c.c.c.c.c.c.ccw",
-        ".........cc.cwc.cwcwcwc.cwc.cwc.c.cwcwcwcwccw",
-        "...ccc...cc.c...............................w",
-        "...c.....cc.c...............................w",
-        "...ccc......c...............................w",
-        "...ccc.c.cc.c...............................w",
-        "...c.c.c.cc.c...............................w",
-        "...c.c.c.cc.c...............................w",
-        "............................................w",
-        "...c.ccc...c................................w",
-        "...c.ccc...c................................w",
-        "...ccccc...c................................w",
-        "............................................w",
-        "............................................w"
+        "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+        "w............cwcwcwcwcwcwcwcwcwcwcwcwcwcwcwccw",
+        "w............c.c.c.c.c.c.........c.c.c.c.c.ccw",
+        "w............c.cwcwcwcwc.cwcwcwc.cwcwcwcwcwccw",
+        "w............cwcwc.......cwcwcwc.cwcwcwcwcwccw",
+        "w............c.c.c.c.c.c.c.c.c.c.c.c.c.c.c.ccw",
+        "w............cwcwc.cwc.c.c.c.cwc.cwcwcwcwcwccw",
+        "w............c.c.c.c.c.c.........c.c.c.c.c.ccw",
+        "w............cwcwc.cwc.c.cwcwcwc.cwcwcwcwcwccw",
+        "w.....cccccc.c.c.c.c.c.c.c.c.....c.c.c.c.c.ccw",
+        "w............cwcwc.cwcwcwcwc.cwcwc.cwcwcwcwccw",
+        "w...ccccc.cc.c.c.c.c.c.c.c.c.....c.c.c.c.c.ccw",
+        "w.......c.cc.cwcwc.c..wcwcwc.cwc.c.cwcwcwcwccw",
+        "w...ccc.c.cc.c.c.c.c.........c.c.c.c.c.c.c.ccw",
+        "w.....c.c....cwc.....cwc.cwc.cwc.c.cwcwcwcwccw",
+        "w...ccc......c.c.c.c.c.......c.c.c.c.c.c.c.ccw",
+        "w.........cc.cwc.cwcwcwc.cwc.cwc.c.cwcwcwcwccw",
+        "w...ccc...cc.c...............................w",
+        "w...c.....cc.c...............................w",
+        "w...ccc......c...............................w",
+        "w...ccc.c.cc.c...............................w",
+        "w...c.c.c.cc.c...............................w",
+        "w...c.c.c.cc.c...............................w",
+        "w............................................w",
+        "w...c.ccc...c................................w",
+        "w...c.ccc...c................................w",
+        "w...ccccc...c................................w",
+        "w............................................w",
+        "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
     ]
 
     game = setupGame(levelString)
@@ -66,7 +67,7 @@ function setupGame(lvlString:string[]):Game {
     app = new PIXI.Application({
         width: viewPortWidth, 
         height: viewPortWidth*window.innerHeight/window.innerWidth,
-        backgroundColor: 0x1099bb,
+        backgroundColor: 0xFFFFFF,
         antialias: false })
     document.body.appendChild(app.view)
 
@@ -101,6 +102,7 @@ interface GameState {
 interface GameReporterState {
     gameOver:boolean
     winner:string
+    secondsLeft:number
 }
 
 // hacky component for a quick GUI 
@@ -110,7 +112,8 @@ class GameReporter extends React.Component {
 
         this.state = {
             gameOver: false,
-            winner: "No winner!"
+            winner: "No winner!",
+            secondsLeft: 0,
         }
 
         game.setReactComponent(this)
@@ -118,12 +121,14 @@ class GameReporter extends React.Component {
     props:GameState
     state:GameReporterState
 
-    gameOver(players:Player[]) {
+    gameOver(winnerMessage:string) {
         this.state.gameOver = true
-        forAll(players, (player:Player) => {
-            if (player.alive)
-                this.state.winner = player.name +" wins!"
-        })
+        this.state.winner = winnerMessage
+        this.setState(this.state)
+    }
+
+    updateClock(secondsLeft:number) {
+        this.state.secondsLeft = secondsLeft
         this.setState(this.state)
     }
 
@@ -133,6 +138,9 @@ class GameReporter extends React.Component {
     render() {
         return (
             <div>
+                <div style={{ display: this.state.secondsLeft > 0 ? "block" : "none" }}>
+                    <h2 color="black">{Math.ceil(this.state.secondsLeft)}</h2>
+                </div>
                 <div style={{ display: this.state.gameOver ? "block" : "none" }}>
                     <h1>GameOver! </h1>
                     <h2 color="green">{this.state.winner}</h2>
