@@ -2,6 +2,8 @@
 
 // this file contains a range of small convenience functions to keep other code cleaner
 
+import { Player } from "./GameLogic/Player/Player"
+
 export let rightDir = { x:  1, y:  0 }
 export let leftDir  = { x: -1, y:  0 }
 export let upDir    = { x:  0, y:  1 }
@@ -57,7 +59,6 @@ export function magnitude(vector:Coord):number {
     let dy2 = vector.y * vector.y
     return Math.sqrt(dx2+dy2)
 }
-
 
 export function forAll(enumerator:any, func:any, logInvalidEnumerator = true) {
     if(isObject(enumerator))

@@ -11,8 +11,9 @@ export class SideViewStage {
     tileHeight: number
 
     zIndexRowOffset:number = 10
-    playerZOffset:number = 1
+    playerZOffset:number = 3
     bombZOffset:number = 2
+    itemZOffset:number = 1
 
     container:Container 
     constructor(tileColumns:number, tileRows:number,  tileWidth:number, tileHeight:number) {
@@ -41,6 +42,10 @@ export class SideViewStage {
 
     getBombZIndexFromY(y: number): number {
         return Math.floor(y) * this.zIndexRowOffset+this.bombZOffset
+    }
+
+    getItemZIndexFromY(y:number) : number {
+        return Math.floor(y) * this.zIndexRowOffset+this.itemZOffset
     }
 
     addChild(child:Sprite) {

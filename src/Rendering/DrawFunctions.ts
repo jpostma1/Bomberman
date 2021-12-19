@@ -41,7 +41,6 @@ export function getBombSprite() : Sprite {
         // this.sprite.scale.set(1,0.65)
 
 export function getTileSprite(tileColumn:number, tileRow:number, getHalveTile:boolean = false) : Sprite {
-    // hardcoded tile sheet info
     const allTilesTexture:BaseTexture = BaseTexture.from('tileSheet')
     let sheetWidth = 7
     let sheetHeight = getHalveTile ? 2 : 1
@@ -61,7 +60,7 @@ export function getTileSprite(tileColumn:number, tileRow:number, getHalveTile:bo
             ))
     const sprite = new Sprite(texture)
     sprite.scale.set(scale, scale)
-
+    
     return sprite
 }
 
@@ -87,3 +86,48 @@ export function getTileWidth():number {
     return tileWidth
 }
 
+export function getItemSprite(itemColumn:number, itemRow:number) : Sprite {
+    const allItemsTexture:BaseTexture = BaseTexture.from('itemSheet')
+    let sheetWidth = 3
+    let sheetHeight = 5
+
+    const texture = new Texture(allItemsTexture,
+        getAnimationFrameRectangle(allItemsTexture, 
+            sheetWidth, 
+            sheetHeight, 
+            itemColumn,
+            itemRow
+            ))
+    const sprite = new Sprite(texture)
+    let scale = getTileHeight() / sprite.height
+    sprite.scale.set(scale, scale)
+
+    return sprite
+}
+
+
+export function getItemExtraBombSprite() {
+    return getItemSprite(0, 0)
+}      
+export function getItemExtraSpeedSprite() {
+    return getItemSprite(0, 4)
+}     
+export function getItemExtraFirePowerSprite() {
+    return getItemSprite(2, 1)
+} 
+export function getItemExtraLifeSprite() {
+    return getItemSprite(0, 2)
+}      
+
+export function getItemLessBombSprite() {
+    return getItemSprite(1, 0)
+}       
+export function getItemLessSpeedSprite() {
+    return getItemSprite(1, 4)
+}      
+export function getItemLessFirePowerSprite() {
+    return getItemSprite(1, 1)
+}  
+export function getItemLessLifeSprite() {
+    return getItemSprite(1, 3)
+}       

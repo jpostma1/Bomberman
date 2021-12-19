@@ -1,6 +1,6 @@
 import { clone } from 'lodash';
 import { Sprite } from 'pixi.js';
-import { Coord, leftDir, rightDir, upDir, downDir, sign, addCoord } from "../../HelperFunctions"
+import { Coord, leftDir, rightDir, upDir, downDir, sign, addCoord, magnitude, subtractCoord } from "../../HelperFunctions"
 import { keyPressed } from "../../Input/KeyboardInput"
 import { getTileSprite, getWallSprite } from '../../Rendering/DrawFunctions';
 import { SideViewStage } from '../Level'
@@ -23,6 +23,7 @@ export interface PlayerSkills {
 export interface PlayerState {
     bombs           : number
     lastBombPlanted : number
+    lives           : number
 }
 
 export interface ControlSettings {
@@ -81,11 +82,23 @@ export class Player {
 
     }
 
-    kill() {
-        this.alive = false
-        this.sprite.visible = false
-        this.targetSprite.visible = false
+    prepForUpdate(collidesFunc:(pos:Coord) => boolean) {
+        this.fourDirectionMovement()
+        
+        // TODO: when player presses 'other direction key', he should move that next free tile, currently he has to hold the key until he is centered on the current tile.
+        // thus; lifting the 'other direction key' before centering results in ignored input
+        this.calcTargetTile(collidesFunc)
+    }
 
+
+    takeLife() {
+        this.state.lives--
+
+        if (this.state.lives < 0) {
+            this.alive = false
+            this.sprite.visible = false
+            this.targetSprite.visible = false
+        }
     }
 
     canPlaceBomb() {
@@ -101,6 +114,7 @@ export class Player {
         this.state = { 
             bombs: this.skills.maxBombs,
             lastBombPlanted: 0,
+            lives: 1
         }
     }
 
@@ -110,6 +124,12 @@ export class Player {
         // =========================
 
         this.sprite = getWallSprite()
+    }
+
+    isInReach(pos:Coord) : boolean {
+        // TODO: instead of "-player.speed" round the player pos to the exact tile when aligned
+        // "-player.speed" currently prevents faulty hits but isn't correct in all cases
+        return magnitude(subtractCoord(pos, { x:this.x, y:this.y })) < 1-this.speed
     }
 
     setX(x:number) {
@@ -303,4 +323,5 @@ export class Player {
         this.tabuDirection = this.secondaryMovingDirection
     }
 }
+
 

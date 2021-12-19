@@ -1,5 +1,4 @@
-import * as PIXI from 'pixi.js';
-import { addCoord, Coord, forAll, getFraction, magnitude, removeItem, subtractCoord } from "../HelperFunctions"
+import { addCoord, Coord, forAll, getFraction, removeItem } from "../HelperFunctions"
 import { logRed, logYellow, verboseLog } from "../Misc/Logging"
 import { Level } from './Level';
 import { ControlSettings, Player, PlayerSkills } from './Player/Player';
@@ -7,7 +6,11 @@ import { CollisionMap } from './CollisionMap';
 import { Bomb, BombManager } from './BombManager';
 import { keyJustPressed, keyJustPressedListener } from '../Input/KeyboardInput';
 import { adjacentTiles } from './ClaimedTerritory';
+import { ItemManager, ItemSettings } from './ItemManager';
+import { Application } from 'pixi.js';
 
+
+// =============== begin settings ================
 let standardPlayerSpeed = 0.05
 let arrowControls:ControlSettings = {
     keyLeft   : 'left',
@@ -28,10 +31,30 @@ let wasdControls:ControlSettings = {
 export let startSkills:PlayerSkills = {
     speed           : standardPlayerSpeed,
     maxBombs        : 20,
-    bombPower       : 3,
+    bombPower       : 2,
     reloadTime      : 10*3000, // in ms
     detonationTime  : 3*1000, // in ms
 }
+
+let itemSettings:ItemSettings = {
+    extraBombChance       : 10,
+    extraSpeedChance      : 10,
+    extraFirePowerChance  : 10,
+    extraLifeChance       : 100,
+    lessBombChance        : 10,
+    lessSpeedChance       : 10,
+    lessFirePowerChance   : 10,
+    lessLifeChance        : 50,
+
+    speedBoost      : standardPlayerSpeed/4,
+    minBombPower    : 2,
+
+    
+    itemDropChance  : 0.2,
+    // itemDropChance  : 0.1
+}
+// =============== end settings ================
+
 
 let collisionIds = {
     empty: 0,
@@ -56,11 +79,12 @@ export class Game {
     level:Level
     players:Player[] = []
     bombManager:BombManager
+    itemManager:ItemManager
     collisionMap:CollisionMap
     bombFirePositions:Coord[] = []
-
-    unaccountedDeltaTime:number
-    constructor(app:PIXI.Application, levelString:string[]) {
+    
+    unaccountedDeltaTime:number = 0
+    constructor(app:Application, levelString:string[]) {
         this.tileColumns = levelString.length
         this.tileRows = levelString[0].length
 
@@ -68,13 +92,36 @@ export class Game {
         this.level = new Level(levelString)
         this.bombManager = new BombManager((bomb) => this.handleExplosion(bomb), this.level.stage)
         app.stage.addChild(this.level.stage.container)
-        
-        
+        this.itemManager = new ItemManager(this.level.stage, itemSettings)
+    
         this.addPlayers()
-
         this.setupCollisionMap(levelString)
+    }
 
-        this.initializeVars()
+    runMechanics(newDelta:number) {
+        if (this.playersAlive() <= 1) {
+            this.reactComponent.gameOver(this.players)
+            return
+        }
+        this.clearBombFire() 
+            
+        let currentDelta = this.unaccountedDeltaTime+newDelta
+        
+        forAll(this.players, (player:Player) => {
+            // to pass a member function requires a lambda, otherwise 'this' isn't bound correctly 
+            player.prepForUpdate((pos:Coord) => this.collides(pos))
+
+            // update
+            for (let i = 0; i < currentDelta; i++)
+                this.checkPlayerCollision(player)
+
+        })
+        
+        this.itemManager.pickupItems(this.players)
+        
+            
+        this.readyForRender()
+        this.unaccountedDeltaTime = getFraction(currentDelta)
     }
 
     addPlayers() {
@@ -115,8 +162,9 @@ export class Game {
     }
 
     killPlayer(player:Player) {
-        player.kill()
-        removeItem(this.players, player)
+        player.takeLife()
+        if (!player.alive)
+            removeItem(this.players, player)
     }
 
     handleExplosion(bomb:Bomb) {
@@ -130,9 +178,7 @@ export class Game {
         
         forAll(hitTiles, (pos:Coord) => {
             forAll(this.players, (player:Player) => {
-                console.log(magnitude(subtractCoord(pos, { x:player.x, y:player.y })), pos, subtractCoord(pos, { x:player.x, y:player.y }))
-
-                if (magnitude(subtractCoord(pos, { x:player.x, y:player.y })) < 1-player.speed) {
+                if (player.isInReach(pos)) {
                     this.killPlayer(player)
                 }
             })
@@ -151,6 +197,7 @@ export class Game {
         // can't erase crate collision yet, since a chainreaction could then penetrate multiple crates. Among other artifacts
         this.collisionMap.setCoord(pos, collisionIds.bombFire)
         this.level.removeCrate(pos)
+        this.itemManager.maybeSpawnItem(pos)
     }
 
     clearBombFire() {
@@ -179,11 +226,6 @@ export class Game {
         }
     }
 
-
-    initializeVars () {
-        this.unaccountedDeltaTime = 0
-    }
-
     setupCollisionMap(levelString:string[]) {
         this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
         for (let x = 0; x < levelString.length; x++) {
@@ -206,42 +248,14 @@ export class Game {
         }
     }
 
-    runMechanics(newDelta:number) {
-        if (this.players.length <= 1) {
-            this.reactComponent.gameOver(this.players)
-            return
-        }
-
-        this.clearBombFire() 
-            
-
-        let currentDelta = this.unaccountedDeltaTime+newDelta
-        
+    playersAlive() {
+        let output = 0
         forAll(this.players, (player:Player) => {
-            player.fourDirectionMovement()
-            // to pass a member function requires a lambda, otherwise 'this' isn't bound correctly 
-
-            // TODO: when player presses 'other direction key', he should move that next free tile, currently he has to hold the key until he is centered on the current tile.
-            // thus; lifting the 'other direction key' before centering results in ignored input
-            player.calcTargetTile((pos:Coord) => this.collides(pos))
-
-            // if (player.targetTile && this.collides(player.targetTile) != 0)
-            //     player.targetTile = undefined
-
-            for (let i = 0; i < currentDelta; i++)
-                this.checkPlayerCollision(player)
-
+            if (player.alive) 
+                output++
         })
-        
 
-        
-            
-        this.readyForRender()
-        this.unaccountedDeltaTime = getFraction(currentDelta)
-    }
-
-    readyForRender() {
-        forAll(this.players, (player:Player) => player.updateSpritePos())
+        return output
     }
 
     collides(cornerPlusSpeedOffset:Coord) {
@@ -275,5 +289,10 @@ export class Game {
         if (player.y - tileMarge <= 0)
             player.y = 0 + tileMarge
     }
+
+    readyForRender() {
+        forAll(this.players, (player:Player) => player.updateSpritePos())
+    }
 }
+
 

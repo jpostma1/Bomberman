@@ -18,6 +18,7 @@ export function loadAssets(onComplete:any) {
     loader.add("isometricTRPGPack", "Assets/IsometricTRPGAssetPack_Entities.png");
     loader.add("isometricTiles", "Assets/Isometric_MedievalFantasy_Tiles.png");
     loader.add("bombSheet", "Assets/sample_bombtextures.png")
+    loader.add("itemSheet", "Assets/Items.png")
 
 
     loader.load()
