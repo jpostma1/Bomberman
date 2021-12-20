@@ -1,9 +1,12 @@
 import { clone, isEqual } from "lodash";
 import { Container, Sprite } from "pixi.js";
-import { Coord, forAll, removeItem } from "../HelperFunctions";
+import { addCoord, Coord, forAll, removeItem } from "../HelperFunctions";
 import { IDPool } from "../Misc/idPool";
 import { getBombSprite, getTileHeight, getTileWidth } from "../Rendering/DrawFunctions";
-import { Game } from "./Game";
+import { adjacentTiles } from "./ClaimedTerritory";
+import { CollisionMap } from "./CollisionMap";
+import { collisionIds, Game, itemSettings } from "./Game";
+import { ItemManager } from "./ItemManager";
 import { Level, SideViewStage } from "./Level";
 import { Player, PlayerSkills } from "./Player/Player";
 
@@ -22,20 +25,42 @@ export class BombManager {
     idPool = new IDPool()
 
     bombs:Bomb[] = []
+    // explosionManager:ExplosionManager
     bombSprites:Sprite[] = []
     stage:SideViewStage
 
-    handleExplosion:(bomb:Bomb) => void
-    constructor (handleExplosion:(bomb:Bomb) => void, stage:SideViewStage) {
-        this.handleExplosion = handleExplosion
-        this.stage = stage
+    collisionMap:CollisionMap
+    itemManager:ItemManager
+    bombFirePositions:Coord[] = []
+    players:Player[]
+    level:Level
+
+    constructor (players:Player[], collisionMap:CollisionMap, level:Level, explosionDuration:number) {
+        this.players = players
+        this.collisionMap = collisionMap
+        this.level = level
+        this.stage = level.stage
+        
+        this.itemManager = new ItemManager(this.level.stage, itemSettings)
+        // this.explosionManager = new ExplosionManager(level.stage, explosionDuration)
     }
 
+    update() {
+        this.clearBombFire()
+        this.itemManager.pickupItems(this.players)
+    }
+
+    maybePlaceBomb(player:Player) {    
+        if (player.canPlaceBomb())
+            this.placeBomb(player)
+    }
 
     placeBomb(player:Player) {
         player.state.lastBombPlanted = performance.now()
         player.state.bombs--
         
+        this.collisionMap.setCoord(player.currentTile, collisionIds.bomb)
+
         let id = this.idPool.newId()
         
         let sprite = this.bombSprites[id]
@@ -54,6 +79,7 @@ export class BombManager {
         sprite.zIndex = this.stage.getBombZIndexFromY(sprite.y)
 
         this.bombs.push(new Bomb(this, player.currentTile, player.skills, id))
+        
     }
 
     chainReaction(pos: Coord) {
@@ -74,6 +100,66 @@ export class BombManager {
         removeItem(this.bombs, bomb)
 
         this.handleExplosion(bomb)
+    }
+
+    
+    handleExplosion(bomb:Bomb) {
+        let hitTiles:Coord[] = [bomb.pos]
+
+        forAll(adjacentTiles, (dir:Coord) => {
+            this.scanLine(hitTiles, addCoord(bomb.pos, dir), dir, bomb.skills.bombPower)
+        })
+
+        // TODO: remove items in the line of fire
+        
+        forAll(hitTiles, (pos:Coord) => {
+            forAll(this.players, (player:Player) => {
+                if (player.isInReach(pos)) {
+                    player.takeLife()
+                }
+            })
+            
+            this.chainReaction(pos)
+
+            if (this.collisionMap.getCoordValue(pos) == 1) {
+                this.removeCrate(pos)
+            }
+            
+            this.bombFirePositions.push(pos)
+        })
+    }
+
+    removeCrate(pos:Coord) {
+        // can't erase crate collision yet, since a chainreaction could then penetrate multiple crates. Among other artifacts
+        this.collisionMap.setCoord(pos, collisionIds.bombFire)
+        this.level.removeCrate(pos)
+        this.itemManager.maybeSpawnItem(pos)
+    }
+
+    clearBombFire() {
+        // remove bomb fire
+        forAll(this.bombFirePositions, (pos:Coord) => {
+            this.collisionMap.setCoord(pos, collisionIds.empty)
+        })
+        
+        this.bombFirePositions.length = 0
+    }
+
+    scanLine(accumulator:Coord[], pos:Coord, direction:Coord, distance:number) :Coord[] {
+        if (distance == 0)
+            return accumulator
+
+        let tileId = this.collisionMap.getCoordValue(pos)
+        if (tileId > 0) {
+            if (tileId < collisionIds.wall)
+                accumulator.push(pos)
+
+            return accumulator
+        } else {
+            accumulator.push(pos)
+            // path in direction is free, so move forward
+            return this.scanLine(accumulator, addCoord(pos, direction), direction, distance - 1)
+        }
     }
 }
 

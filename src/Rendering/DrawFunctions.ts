@@ -1,6 +1,7 @@
 
 
-import { BaseTexture, Sprite, Texture } from 'pixi.js';
+import { AnimatedSprite, BaseTexture, Sprite, Texture } from 'pixi.js';
+import { Coord } from '../HelperFunctions';
 
 import { getAnimationFrameRectangle } from "./LoadAssets"
 
@@ -90,6 +91,25 @@ export function getTileWidth():number {
     return tileWidth
 }
 
+
+
+export function getExplosion() : AnimatedSprite {
+    
+    const explosionTextures = [];
+    for (let i = 0; i < 20; i++) {
+        const texture = Texture.from(`Explosion_Sequence_A ${i + 1}.png`);
+        explosionTextures.push(texture);
+    }
+
+    let animatedSprite = new AnimatedSprite(explosionTextures)
+    animatedSprite.anchor.set(0.25, 0)
+    let scale = 2 * getTileHeight() / animatedSprite.height
+    animatedSprite.scale.set(scale, scale)
+
+    return animatedSprite
+}
+
+
 export function getItemSprite(itemColumn:number, itemRow:number) : Sprite {
     const allItemsTexture:BaseTexture = BaseTexture.from('itemSheet')
     let sheetWidth = 3
@@ -108,7 +128,6 @@ export function getItemSprite(itemColumn:number, itemRow:number) : Sprite {
 
     return sprite
 }
-
 
 export function getItemExtraBombSprite() {
     return getItemSprite(0, 0)

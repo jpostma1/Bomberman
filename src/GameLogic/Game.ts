@@ -8,6 +8,7 @@ import { keyJustPressed, keyJustPressedListener } from '../Input/KeyboardInput';
 import { adjacentTiles, ClaimedTerritory } from './ClaimedTerritory';
 import { ItemManager, ItemSettings } from './ItemManager';
 import { Application } from 'pixi.js';
+import { getExplosion, getTileWidth } from "../Rendering/DrawFunctions";
 
 
 // =============== begin settings ================
@@ -37,13 +38,15 @@ export let startSkills:PlayerSkills = {
 }
 
 export interface GameSettings {
-    lengthInSeconds     : number
+    gameDuration        : number
+    explosionDuration   : number
 }
 let gameSettings:GameSettings = {
-    lengthInSeconds: 60 //3*60 
+    gameDuration: 60, //3*60 
+    explosionDuration: 2,
 }
 
-let itemSettings:ItemSettings = {
+export let itemSettings:ItemSettings = {
     // the chances are relative to each other
     extraBombChance       : 10,
     extraSpeedChance      : 10,
@@ -64,7 +67,7 @@ let itemSettings:ItemSettings = {
 // =============== end settings ================
 
 
-let collisionIds = {
+export let collisionIds = {
     empty: 0,
     crate: 1,
     bomb: 2,
@@ -87,10 +90,10 @@ export class Game {
     level:Level
     players:Player[] = []
     bombManager:BombManager
-    itemManager:ItemManager
+    
     collisionMap:CollisionMap
     claimedTerritory:ClaimedTerritory
-    bombFirePositions:Coord[] = []
+    
 
 
     gameOver:boolean = false
@@ -100,16 +103,18 @@ export class Game {
         this.tileColumns = levelString.length
         this.tileRows = levelString[0].length
 
-        
         this.level = new Level(levelString)
-        this.bombManager = new BombManager((bomb) => this.handleExplosion(bomb), this.level.stage)
         app.stage.addChild(this.level.stage.container)
-        this.itemManager = new ItemManager(this.level.stage, itemSettings)
+
+        this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
+        this.setupCollisionMap(levelString)
+
+        this.bombManager = new BombManager(this.players, this.collisionMap, this.level, gameSettings.explosionDuration)
         this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
 
         this.addPlayers()
-        this.setupCollisionMap(levelString)
     }
+        
 
     getWinnerMessage() {
         let alivePlayers = this.players.filter(p => p.alive)
@@ -132,7 +137,7 @@ export class Game {
             return
         }
 
-        this.clearBombFire()
+        
             
         // NOTE: probably better if this has a max, compensating a lagg spike of > 1 sec would only mess up the game
         let currentDelta = this.unaccountedDeltaTime+newDelta
@@ -150,9 +155,8 @@ export class Game {
             })
         }
         
-        this.itemManager.pickupItems(this.players)
+        this.bombManager.update()
         
-            
         this.readyForRender()
         this.unaccountedDeltaTime = getFraction(currentDelta)
     }
@@ -197,112 +201,23 @@ export class Game {
         keyJustPressedListener.addKeyJustPressedFunction((event:KeyboardEvent) => {
             forAll(this.players, (player:Player) => {
                 if (keyJustPressed(event, player.controls.placeBomb)) {
-                    if (player.canPlaceBomb()) {
-                        this.placeBomb(player)
-                    }
+                    this.bombManager.maybePlaceBomb(player)
                 }
             })
         })
-    }
-
-    placeBomb(player:Player) {
-        this.collisionMap.setCoord(player.currentTile, collisionIds.bomb)
-        this.bombManager.placeBomb(player)
-    }
-
-    killPlayer(player:Player) {
-        player.takeLife()
-        if (!player.alive)
-            removeItem(this.players, player)
-    }
-
-    handleExplosion(bomb:Bomb) {
-        let hitTiles:Coord[] = [bomb.pos]
-
-        forAll(adjacentTiles, (dir:Coord) => {
-            this.scanLine(hitTiles, addCoord(bomb.pos, dir), dir, bomb.skills.bombPower)
-        })
-
-        // TODO: remove items in the line of fire
-        
-        forAll(hitTiles, (pos:Coord) => {
-            forAll(this.players, (player:Player) => {
-                if (player.isInReach(pos)) {
-                    this.killPlayer(player)
-                }
-            })
-            
-            this.bombManager.chainReaction(pos)
-
-            if (this.collisionMap.getCoordValue(pos) == 1) {
-                this.removeCrate(pos)
-            }
-            
-            this.bombFirePositions.push(pos)
-        })
-    }
-
-    removeCrate(pos:Coord) {
-        // can't erase crate collision yet, since a chainreaction could then penetrate multiple crates. Among other artifacts
-        this.collisionMap.setCoord(pos, collisionIds.bombFire)
-        this.level.removeCrate(pos)
-        this.itemManager.maybeSpawnItem(pos)
-    }
-
-    clearBombFire() {
-        // remove bomb fire
-        forAll(this.bombFirePositions, (pos:Coord) => {
-            this.collisionMap.setCoord(pos, collisionIds.empty)
-        })
-        
-        this.bombFirePositions.length = 0
-    }
-
-    scanLine(accumulator:Coord[], pos:Coord, direction:Coord, distance:number) :Coord[] {
-        if (distance == 0)
-            return accumulator
-
-        let tileId = this.collisionMap.getCoordValue(pos)
-        if (tileId > 0) {
-            if (tileId < collisionIds.wall)
-                accumulator.push(pos)
-
-            return accumulator
-        } else {
-            accumulator.push(pos)
-            // path in direction is free, so move forward
-            return this.scanLine(accumulator, addCoord(pos, direction), direction, distance - 1)
-        }
-    }
-
-    setupCollisionMap(levelString:string[]) {
-        this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
-        for (let x = 0; x < levelString.length; x++) {
-            for (let y = 0; y < levelString[x].length; y++) {
-                switch (levelString[x][y]) {
-
-                    case '.':
-                        this.collisionMap.setValue(x, y, 0)
-                    break;
-
-                    case 'c':
-                        this.collisionMap.setValue(x, y, collisionIds.crate)
-                    break;
-
-                    case 'w':
-                        this.collisionMap.setValue(x, y, collisionIds.wall)
-                    break;
-                }
-            }
-        }
     }
 
     playersAlive() {
         let output = 0
-        forAll(this.players, (player:Player) => {
+        for (let i = 0; i < this.players.length; i++) {
+            let player = this.players[i]
             if (player.alive) 
                 output++
-        })
+            else {
+                i--
+                removeItem(this.players, player)
+            }       
+        }
 
         return output
     }
@@ -339,8 +254,28 @@ export class Game {
             player.y = 0 + tileMarge
     }
 
+    setupCollisionMap(levelString:string[]) {
+        for (let x = 0; x < levelString.length; x++) {
+            for (let y = 0; y < levelString[x].length; y++) {
+                switch (levelString[x][y]) {
+                    case '.':
+                        this.collisionMap.setValue(x, y, 0)
+                    break;
+
+                    case 'c':
+                        this.collisionMap.setValue(x, y, collisionIds.crate)
+                    break;
+
+                    case 'w':
+                        this.collisionMap.setValue(x, y, collisionIds.wall)
+                    break;
+                }
+            }
+        }
+    }
+
     getSecondsLeft() {
-        return gameSettings.lengthInSeconds - (performance.now() - this.startingTime) / 1000
+        return gameSettings.gameDuration - (performance.now() - this.startingTime) / 1000
     }
 
     readyForRender() {

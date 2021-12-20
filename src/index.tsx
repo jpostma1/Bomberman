@@ -107,8 +107,8 @@ interface GameReporterState {
 
 // hacky component for a quick GUI 
 class GameReporter extends React.Component {
-    constructor() {
-        super({})
+    constructor(props:GameState) {
+        super(props)
 
         this.state = {
             gameOver: false,
@@ -116,9 +116,13 @@ class GameReporter extends React.Component {
             secondsLeft: 0,
         }
 
-        game.setReactComponent(this)
+        // I thought this would happen in super(props)
+        // but TS requires this with "strictPropertyInitialization = true"
+        this.props = props
+
+        props.game.setReactComponent(this)
     }
-    props:GameState
+    props:GameState 
     state:GameReporterState
 
     gameOver(winnerMessage:string) {

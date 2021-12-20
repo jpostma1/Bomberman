@@ -1,23 +1,22 @@
-import * as PIXI from 'pixi.js';
-
+import { BaseTexture, Loader, Rectangle, SCALE_MODES, settings } from "pixi.js";
 
 
 export function loadAssets(onComplete:any) {
     // const loader = PIXI.loader;
-    const loader = PIXI.Loader.shared;
+    const loader = Loader.shared;
 
     // set texture sampling mode to NEAREST for Sharp Pixel Art rendering
-    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
+    settings.SCALE_MODE = SCALE_MODES.NEAREST
 
     // enable depth testing
-    PIXI.settings.SORTABLE_CHILDREN = true
+    settings.SORTABLE_CHILDREN = true
 
 
-    loader.add("bunny", "Assets/bunny.png")
     loader.add("tileSheet", "Assets/tilesFromSide.png")
     loader.add("isometricTRPGPack", "Assets/IsometricTRPGAssetPack_Entities.png");
-    loader.add("isometricTiles", "Assets/Isometric_MedievalFantasy_Tiles.png");
     loader.add("bombSheet", "Assets/sample_bombtextures.png")
+    // loader.add("explosionSheet", "Assets/explosion-SpriteSheet.png")
+    loader.add('explosionSheetFromJSON', 'Assets/mc.json')
     loader.add("itemSheet", "Assets/Items.png")
 
 
@@ -28,10 +27,10 @@ export function loadAssets(onComplete:any) {
 
 
 
-export function getAnimationFrameRectangle(texture:PIXI.BaseTexture, columns:number, rows:number, column:number, row:number):PIXI.Rectangle {
+export function getAnimationFrameRectangle(texture:BaseTexture, columns:number, rows:number, column:number, row:number):Rectangle {
     var w = texture.width / columns
     var h = texture.height / rows
 
-    return new PIXI.Rectangle(column*w, row*h, w, h)
+    return new Rectangle(column*w, row*h, w, h)
 
 }

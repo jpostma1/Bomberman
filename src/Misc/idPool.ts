@@ -18,8 +18,6 @@ export class IDPool {
 
     currentIds:any = {} 
 
-    keepCurrentMaxIdLow:boolean
-
     reset() {
         this.idleIds = []
         this.liveIdCount = 0

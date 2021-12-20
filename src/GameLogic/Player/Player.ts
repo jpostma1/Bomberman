@@ -37,52 +37,47 @@ export interface ControlSettings {
 let currentPlayerId:number = 1
 export class Player {
 
-    x:number
-    y:number
     id:number
-    tint:number
 
-    currentTile:Coord
+    currentTile:Coord = {x:0, y:0}
+
+    // These values can be 'unset' instead of using a seperate boolean for each I've used undefined to check if they are set.
     targetTile?:Coord
     movingDirection?:Coord
     secondaryMovingDirection?:Coord
     tabuDirection?:Coord
 
-    lvlStage:SideViewStage
-
     targetSprite:Sprite
     sprite:Sprite
 
-    controls:ControlSettings
 
     skills:PlayerSkills
     state:PlayerState
 
-    name:string
     alive:boolean = true
-    constructor(name:string, tint:number, x:number, y:number, controls:ControlSettings, skills:PlayerSkills, lvlStage:SideViewStage) {
-        this.name = name
-        this.x = x
-        this.y = y
+    constructor(
+        public name:string, 
+        public tint:number, 
+        public x:number, 
+        public y:number, 
+        public controls:ControlSettings, 
+        skills:PlayerSkills, 
+        public lvlStage:SideViewStage) {
+
         this.id = currentPlayerId++
 
         this.skills = clone(skills)
-        this.resetState()
-
-        this.controls = controls
-        this.tint = tint
-
-        // These values can be 'unset' instead of using a seperate boolean for each I've used undefined to check if they are set. 
-        this.targetTile = undefined
-        this.movingDirection = undefined
-        this.secondaryMovingDirection = undefined
-        this.tabuDirection = undefined
-
-
-        this.lvlStage = lvlStage
+        this.state = { 
+                    bombs: this.skills.maxBombs,
+                    lastBombPlanted: 0,
+                    lives: 1
+                }
 
         this.updateCurrentTile()
-        this.setupSprite()
+
+        // I believe TS forces to initialize in the constructor (instead of member func called by constructor)
+        this.targetSprite = getTileSprite(1, 0, true)
+        this.sprite = getWallSprite()
 
     }
 
@@ -97,7 +92,7 @@ export class Player {
 
     takeLife() {
         this.state.lives--
-
+        
         if (this.state.lives < 0) {
             this.alive = false
             this.sprite.visible = false
@@ -112,22 +107,6 @@ export class Player {
 
     public get speed() {
         return this.skills.speed
-    }
-    
-    resetState() {
-        this.state = { 
-            bombs: this.skills.maxBombs,
-            lastBombPlanted: 0,
-            lives: 1
-        }
-    }
-
-    setupSprite() {
-        // =========== debug ==============
-        this.targetSprite = getTileSprite(1, 0, true)
-        // =========================
-
-        this.sprite = getWallSprite()
     }
 
     isInReach(pos:Coord) : boolean {

@@ -59,14 +59,14 @@ export class SideViewStage {
 
 export class Level {
     
-    tiles: Sprite[][]
-    currentZIndex: number
+    tiles: Sprite[][] = []
+    currentZIndex: number = 0
 
     
     stage:SideViewStage
 
     constructor(levelString:string[]) {
-        
+        this.stage = new SideViewStage(levelString.length, levelString[0].length, getTileWidth(), getTileHeight())
         this.setupTiles(levelString)
 
     }
@@ -84,15 +84,6 @@ export class Level {
     }
 
     setupTiles(levelString:string[]) {
-        this.tiles = []
-        this.currentZIndex = 0
-
-        
-
-        let tileColumns = levelString.length
-        let tileRows    = levelString[0].length
-        this.stage = new SideViewStage(tileColumns, tileRows, getTileWidth(), getTileHeight())
-
         for (let x = 0; x < levelString.length; x++) {
             this.tiles[x] = []
             for (let y = 0; y < levelString[x].length; y++) {
