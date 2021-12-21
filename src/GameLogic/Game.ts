@@ -8,6 +8,7 @@ import { Application } from 'pixi.js';
 import { BombAndItemLogic } from "./BombAndItemLogic";
 import { arrowControls, gameSettings, startSkills, wasdControls } from "../Misc/Settings";
 import { PlayerStateHeader } from "../Rendering/UI/PlayerStateHeader";
+import { logError } from "../Misc/Logging";
 
 
 
@@ -50,14 +51,16 @@ export class Game {
 
         this.level = new Level(levelString)
         app.stage.addChild(this.level.stage.container)
+        
 
         this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
-        this.setupCollisionMap(levelString)
+        // side effect: parses player position
+        let playerPositions = this.setupCollisionMap(levelString)
 
         this.bombManager = new BombAndItemLogic(this.players, this.collisionMap, this.level, gameSettings.explosionDuration)
         this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
 
-        this.addPlayers()
+        this.addPlayers(playerPositions)
         this.ui = new PlayerStateHeader(this.players, app.stage, this.level.stage.container)
     }
     
@@ -67,13 +70,14 @@ export class Game {
         
         if (alivePlayers.length > 0) {
             // TODO: fix: rare case of a draw on claimed tiles will appoint first player ':)
-            let winner = maximumBy(alivePlayers, (player:Player) => this.claimedTerritory.countClaimedTiles(player.id))
+            let winner = maximumBy(alivePlayers, (player:Player) => this.claimedTerritory.getClaimedTiles(player.id))
             return winner.name
         }
 
         return "No winner!"
     }
 
+    
     runMechanics(newDelta:number) {
         if (this.isGameOver()) {
             if (!this.gameOver)
@@ -112,6 +116,7 @@ export class Game {
         let outlineBonusTerritory:Coord[] = this.claimedTerritory.outlineMakesNewClosedTerritory(currentTile, player.id)
         outlineBonusTerritory.push(currentTile)
         forAll(outlineBonusTerritory, (pos:Coord) => this.level.tiles[pos.x][pos.y].tint = player.tint)
+
         player.state.tilesClaimed = this.claimedTerritory.getClaimedTiles(player.id)
     }
 
@@ -119,17 +124,27 @@ export class Game {
         return this.getSecondsLeft() <= 0 || this.playersAlive() <= 1
     }
 
-    addPlayers() {
+    addPlayers(playerPositions:any) {
+        if (playerPositions[1] == undefined) {
+            logError("player 1 is not present in level config file!")
+            playerPositions[1] = {x:1, y: 1}
+        }
+        if (playerPositions[2] == undefined) {
+            logError("player 2 is not present in level config file!")
+            playerPositions[2] = {x:this.tileColumns-2, y: this.tileRows-2}
+        }
+
+
         let player = new Player("P1", 0x0000FF, 
-            Math.floor(this.tileColumns/2), 
-            Math.floor(this.tileRows/2), 
+            Math.floor(playerPositions[1].x), 
+            Math.floor(playerPositions[1].y), 
             wasdControls,
             startSkills,  
             this.level.stage)
 
         let otherPlayer = new Player("P2", 0xFF0000, 
-            Math.floor(this.tileColumns/2+10), 
-            Math.floor(this.tileRows/2), 
+            Math.floor(playerPositions[2].x), 
+            Math.floor(playerPositions[2].y), 
             arrowControls, 
             startSkills,  
             this.level.stage)
@@ -200,24 +215,30 @@ export class Game {
             player.y = 0 + tileMarge
     }
 
-    setupCollisionMap(levelString:string[]) {
+    setupCollisionMap(levelString:string[]):any {
+        let initialPlayerPositions:any = {}
         for (let x = 0; x < levelString.length; x++) {
             for (let y = 0; y < levelString[x].length; y++) {
                 switch (levelString[x][y]) {
+                    case 'p':
+                        initialPlayerPositions[levelString[x][y+1]] = {x:x, y:y}
+                    break
                     case '.':
                         this.collisionMap.setValue(x, y, 0)
-                    break;
+                    break
 
                     case 'c':
                         this.collisionMap.setValue(x, y, collisionIds.crate)
-                    break;
+                    break
 
                     case 'w':
                         this.collisionMap.setValue(x, y, collisionIds.wall)
-                    break;
+                    break
                 }
             }
         }
+
+        return initialPlayerPositions
     }
 
     getSecondsLeft() {

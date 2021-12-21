@@ -8,15 +8,13 @@ import { loadAssets } from './Rendering/LoadAssets';
 
 
 
-let game:Game 
-
 loadAssets(() => {
 
     var levelString = [
         "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
         "w............cwcwcwcwcwcwcwcwcwcwcwcwcwcwcwccw",
         "w............c.c.c.c.c.c.........c.c.c.c.c.ccw",
-        "w............c.cwcwcwcwc.cwcwcwc.cwcwcwcwcwccw",
+        "w....p1......c.cwcwcwcwc.cwcwcwc.cwcwcwcwcwccw",
         "w............cwcwc.......cwcwcwc.cwcwcwcwcwccw",
         "w............c.c.c.c.c.c.c.c.c.c.c.c.c.c.c.ccw",
         "w............cwcwc.cwc.c.c.c.cwc.cwcwcwcwcwccw",
@@ -37,16 +35,14 @@ loadAssets(() => {
         "w...c.c.c.cc.c...............................w",
         "w...c.c.c.cc.c...............................w",
         "w............................................w",
-        "w...c.ccc...c................................w",
+        "w...c.ccc...c...............p2...............w",
         "w...c.ccc...c................................w",
         "w...ccccc...c................................w",
         "w............................................w",
         "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
     ]
 
-    game = setupGame(levelString)
-    // for global use in browser
-    verboseLog(app)
+    let game = setupGame(levelString)
 
     ReactDOM.render(<GameReporter game={game}></GameReporter>, document.getElementById('root'));
 })
@@ -56,11 +52,9 @@ loadAssets(() => {
 let viewPortWidth:number = 1000
 // let viewPortHeight = 1000
 
-let app:Application
 
 function setupGame(lvlString:string[]):Game {
-    
-    app = new Application({
+    let app = new Application({
         width: viewPortWidth, 
         height: viewPortWidth*window.innerHeight/window.innerWidth,
         backgroundColor: 0xFFFFFF,
@@ -75,8 +69,9 @@ function setupGame(lvlString:string[]):Game {
     let last60frames = performance.now()
     app.ticker.add((deltaFrames) => {
         thisGame.runMechanics(deltaFrames)
+        thisGame.ui.update()
 
-        if (keyPressed("esc")) {
+        if (keyPressed("esc") || thisGame.gameOver) {
             app.ticker.stop()
             console.warn("ticker stopped!")
         }
@@ -118,6 +113,7 @@ class GameReporter extends React.Component {
 
         props.game.setReactComponent(this)
     }
+
     props:GameState 
     state:GameReporterState
 

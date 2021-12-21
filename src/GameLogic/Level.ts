@@ -38,23 +38,31 @@ export class Level {
             for (let y = 0; y < levelString[x].length; y++) {
                 switch (levelString[x][y]) {
 
+                    case 'p':
+                        this.newFloorTile(x, y)
+                        this.newFloorTile(x, y+1)
+                    break
                     case '.':
-                        let floorTile = getFloorSprite()
-                        floorTile.alpha = 0.2
-                        this.newTile(x, y, floorTile)
-                    break;
+                        this.newFloorTile(x, y)
+                    break
 
                     case 'c':
                         this.newTile(x, y, getCrateSprite())
-                    break;
+                    break
 
                     case 'w':
                         this.newTile(x, y, getWallSprite())
-                    break;
+                    break
 
                 }
             }
         }
+    }
+
+    newFloorTile(x:number, y:number) {
+        let floorTile = getFloorSprite()
+        floorTile.alpha = 0.2
+        this.newTile(x, y, floorTile)
     }
 
     newTile(x:number, y:number, tile:Sprite) {
