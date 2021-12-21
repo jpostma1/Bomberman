@@ -2,7 +2,6 @@ import { BaseTexture, Loader, Rectangle, SCALE_MODES, settings } from "pixi.js";
 
 
 export function loadAssets(onComplete:any) {
-    // const loader = PIXI.loader;
     const loader = Loader.shared;
 
     // set texture sampling mode to NEAREST for Sharp Pixel Art rendering
@@ -13,9 +12,8 @@ export function loadAssets(onComplete:any) {
 
 
     loader.add("tileSheet", "Assets/tilesFromSide.png")
-    loader.add("isometricTRPGPack", "Assets/IsometricTRPGAssetPack_Entities.png");
+    loader.add("playerSheet", "Assets/IsometricTRPGAssetPack_Entities.png");
     loader.add("bombSheet", "Assets/sample_bombtextures.png")
-    // loader.add("explosionSheet", "Assets/explosion-SpriteSheet.png")
     loader.add('explosionSheetFromJSON', 'Assets/mc.json')
     loader.add("itemSheet", "Assets/Items.png")
 

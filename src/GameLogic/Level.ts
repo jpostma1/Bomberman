@@ -1,5 +1,5 @@
 
-import { getCrateSprite, getFloorSprite, getTileHeight, getTileWidth, getWallSprite } from "../Rendering/DrawFunctions";
+import { getCrateSprite, getFloorSprite, getTileHeight, getTileWidth, getWallSprite } from "../Rendering/GetSpriteFunctions";
  
 import { Sprite } from "pixi.js";
 import { Coord } from "../Misc/HelperFunctions";

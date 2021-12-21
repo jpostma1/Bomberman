@@ -1,10 +1,8 @@
 
 
 import { AnimatedSprite, BaseTexture, Sprite, Texture } from 'pixi.js';
-import { Coord } from '../HelperFunctions';
 
 import { getAnimationFrameRectangle } from "./LoadAssets"
-
 
 export function getCrateSprite():Sprite {
     return getTileSprite(2, 0)
@@ -42,24 +40,18 @@ export function getBombSprite() : Sprite {
     return sprite
 }
 
-// const texture = PIXI.Texture.from('bunny')
-        // this.sprite.scale.set(1,0.65)
 
 export function getTileSprite(tileColumn:number, tileRow:number, getHalveTile:boolean = false) : Sprite {
     const allTilesTexture:BaseTexture = BaseTexture.from('tileSheet')
     let sheetWidth = 7
-    let sheetHeight = getHalveTile ? 2 : 1
+    let sheetHeight = 1
 
     let scale = 1/2
-
-    tileWidth  = Math.floor((allTilesTexture.width /sheetWidth)  *scale)
-    // NOTE: tileHeight is devided by 2, for the 'isometric' view
-    tileHeight = Math.floor((allTilesTexture.height/sheetHeight) *scale/2)
 
     const texture = new Texture(allTilesTexture,
         getAnimationFrameRectangle(allTilesTexture, 
             sheetWidth, 
-            sheetHeight, 
+            getHalveTile ? sheetHeight * 2 : sheetHeight, 
             tileColumn,
             tileRow
             ))
@@ -75,8 +67,7 @@ export function getTileHeight():number {
     if (tileHeight)
         return tileHeight
     
-    // call to initialize tileHeight
-    getTileSprite(0, 0)
+    initializeTileDimensions()
     
     return tileHeight
 }
@@ -85,11 +76,49 @@ export function getTileWidth():number {
     if (tileWidth)
         return tileWidth
     
-    // call to initialize tileWidth
-    getTileSprite(0, 0)
-    
+    initializeTileDimensions()
+
     return tileWidth
 }
+
+function initializeTileDimensions() {
+    const allTilesTexture:BaseTexture = BaseTexture.from('tileSheet')
+    let sheetWidth = 7
+    let sheetHeight = 1
+    let scale = 1 / 2
+
+    
+    tileWidth  = Math.floor((allTilesTexture.width /sheetWidth)  *scale)
+    // NOTE: tileHeight is devided by 2, for the 'isometric' view
+    tileHeight = Math.floor((allTilesTexture.height/sheetHeight) *scale/2)
+}
+
+
+export function getPlayerSprite(column:number, row:number) : Sprite {
+    const playerTextureSheet:BaseTexture = BaseTexture.from('playerSheet')
+    let sheetWidth = 4
+    let sheetHeight = 33
+
+    
+
+    const texture = new Texture(playerTextureSheet,
+        getAnimationFrameRectangle(playerTextureSheet, 
+            sheetWidth, 
+            sheetHeight, 
+            column,
+            row
+            ))
+    const sprite = new Sprite(texture)
+    let scale = 3
+    sprite.scale.set(scale, scale)
+    sprite.anchor._x = 0.25
+    sprite.anchor._y = 0.25
+
+    return sprite
+}
+
+
+
 
 
 
@@ -102,7 +131,6 @@ export function getExplosion() : AnimatedSprite {
     }
 
     let animatedSprite = new AnimatedSprite(explosionTextures)
-    animatedSprite.anchor.set(0.25, 0)
     let scale = 2 * getTileHeight() / animatedSprite.height
     animatedSprite.scale.set(scale, scale)
 
@@ -123,7 +151,7 @@ export function getItemSprite(itemColumn:number, itemRow:number) : Sprite {
             itemRow
             ))
     const sprite = new Sprite(texture)
-    let scale = getTileHeight() / sprite.height
+    let scale = getTileHeight() / sprite.height * 1.5
     sprite.scale.set(scale, scale)
 
     return sprite

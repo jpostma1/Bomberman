@@ -1,4 +1,4 @@
-import { getTileHeight, getTileWidth } from "../Rendering/DrawFunctions";
+import { getTileHeight, getTileWidth } from "../Rendering/GetSpriteFunctions";
 import { Sprite, Container } from "pixi.js";
 
 
