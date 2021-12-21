@@ -1,70 +1,15 @@
-import { addCoord, Coord, forAll, getFraction, maximumBy, removeItem } from "../HelperFunctions"
-import { logRed, logYellow, verboseLog } from "../Misc/Logging"
+import { Coord, forAll, getFraction, getSecondsElapsed, maximumBy, removeItem } from "../Misc/HelperFunctions"
 import { Level } from './Level';
-import { ControlSettings, Player, PlayerSkills } from './Player/Player';
+import { Player } from './Player/Player';
 import { CollisionMap } from './CollisionMap';
-import { Bomb, BombManager } from './BombManager';
 import { keyJustPressed, keyJustPressedListener } from '../Input/KeyboardInput';
-import { adjacentTiles, ClaimedTerritory } from './ClaimedTerritory';
-import { ItemManager, ItemSettings } from './ItemManager';
+import { ClaimedTerritory } from './ClaimedTerritory';
 import { Application } from 'pixi.js';
-import { getExplosion, getTileWidth } from "../Rendering/DrawFunctions";
+import { BombAndItemLogic } from "./BombAndItemLogic";
+import { arrowControls, gameSettings, startSkills, wasdControls } from "../Misc/Settings";
 
 
-// =============== begin settings ================
-let standardPlayerSpeed = 0.05
-let arrowControls:ControlSettings = {
-    keyLeft   : 'left',
-    keyRight  : 'right',
-    keyUp     : 'up',
-    keyDown   : 'down',
-    placeBomb : 'ctrl',
-}
 
-let wasdControls:ControlSettings = {
-    keyLeft   : 'a',
-    keyRight  : 'd',
-    keyUp     : 'w',
-    keyDown   : 's',
-    placeBomb : 'space',
-}
-
-export let startSkills:PlayerSkills = {
-    speed           : standardPlayerSpeed,
-    maxBombs        : 20,
-    bombPower       : 2,
-    reloadTime      : 10*3000, // in ms
-    detonationTime  : 3*1000, // in ms
-}
-
-export interface GameSettings {
-    gameDuration        : number
-    explosionDuration   : number
-}
-let gameSettings:GameSettings = {
-    gameDuration: 60, //3*60 
-    explosionDuration: 2,
-}
-
-export let itemSettings:ItemSettings = {
-    // the chances are relative to each other
-    extraBombChance       : 10,
-    extraSpeedChance      : 10,
-    extraFirePowerChance  : 10,
-    extraLifeChance       : 10,
-    lessBombChance        : 10,
-    lessSpeedChance       : 10,
-    lessFirePowerChance   : 10,
-    lessLifeChance        : 10,
-
-    speedBoost      : standardPlayerSpeed/4,
-    minBombPower    : 2,
-
-    
-    itemDropChance  : 0.2,
-    // itemDropChance  : 0.1
-}
-// =============== end settings ================
 
 
 export let collisionIds = {
@@ -89,12 +34,10 @@ export class Game {
 
     level:Level
     players:Player[] = []
-    bombManager:BombManager
+    bombManager:BombAndItemLogic
     
     collisionMap:CollisionMap
     claimedTerritory:ClaimedTerritory
-    
-
 
     gameOver:boolean = false
     unaccountedDeltaTime:number = 0
@@ -109,13 +52,12 @@ export class Game {
         this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
         this.setupCollisionMap(levelString)
 
-        this.bombManager = new BombManager(this.players, this.collisionMap, this.level, gameSettings.explosionDuration)
+        this.bombManager = new BombAndItemLogic(this.players, this.collisionMap, this.level, gameSettings.explosionDuration)
         this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
 
         this.addPlayers()
     }
-        
-
+    
     getWinnerMessage() {
         let alivePlayers = this.players.filter(p => p.alive)
 
@@ -174,14 +116,14 @@ export class Game {
     }
 
     addPlayers() {
-        let player = new Player("P1", 0xFF0000, 
+        let player = new Player("P1", 0x0000FF, 
             Math.floor(this.tileColumns/2), 
             Math.floor(this.tileRows/2), 
             wasdControls,
             startSkills,  
             this.level.stage)
 
-        let otherPlayer = new Player("P2", 0x0000FF, 
+        let otherPlayer = new Player("P2", 0xFF0000, 
             Math.floor(this.tileColumns/2+10), 
             Math.floor(this.tileRows/2), 
             arrowControls, 
@@ -275,7 +217,7 @@ export class Game {
     }
 
     getSecondsLeft() {
-        return gameSettings.gameDuration - (performance.now() - this.startingTime) / 1000
+        return gameSettings.gameDuration - getSecondsElapsed(this.startingTime)
     }
 
     readyForRender() {

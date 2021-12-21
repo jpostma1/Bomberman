@@ -1,43 +1,20 @@
-import { clone } from "lodash";
+
 import { Sprite } from "pixi.js";
-import { binarySearch, Coord, forAll, magnitude, removeItem, subtractCoord } from "../HelperFunctions";
-import { log } from "../Misc/Logging";
-import { getItemExtraBombSprite, getItemExtraFirePowerSprite, getItemExtraLifeSprite, getItemExtraSpeedSprite, getItemLessBombSprite, getItemLessFirePowerSprite, getItemLessLifeSprite, getItemLessSpeedSprite, getItemSprite, getTileHeight, getTileWidth } from "../Rendering/DrawFunctions";
-import { SideViewStage } from "./Level";
+import { binarySearch, Coord, forAll, removeItem } from "../Misc/HelperFunctions";
+import { getItemExtraBombSprite, getItemExtraFirePowerSprite, getItemExtraLifeSprite, getItemExtraSpeedSprite, getItemLessBombSprite, getItemLessFirePowerSprite, getItemLessLifeSprite, getItemLessSpeedSprite, getItemSprite, getTileHeight, getTileWidth } from "../Rendering/GetSpriteFunctions";
+import { SideViewStage } from "./SideViewStage";
 import { Player } from "./Player/Player";
+import { ItemSettings } from "../Misc/Settings";
 
 
 
-export interface ItemSettings {
-    // item drop chance (may be zero)
-    extraBombChance         : number
-    extraSpeedChance        : number
-    extraFirePowerChance    : number
-    extraLifeChance         : number
-    
-    lessBombChance          : number
-    lessSpeedChance         : number
-    lessFirePowerChance     : number
-    lessLifeChance          : number
-
-    // item variable
-    speedBoost              : number
-    minBombPower            : number
-
-    // should be within 0 and 1
-    itemDropChance          : number
-}
 
 export class Item {
-    sprite:Sprite
-    pos:Coord
-    pickupAction:(player:Player) => void
-    manager:ItemManager
-    constructor (manager:ItemManager, sprite:Sprite, pos:Coord, pickupAction:(player:Player) => void) {
-        this.sprite = sprite
-        this.pos = pos
-        this.pickupAction = pickupAction
-        this.manager = manager
+    constructor (
+        public manager:ItemManager, 
+        public sprite:Sprite,
+        public pos:Coord, 
+        public pickupAction:(player:Player) => void) {
 
         sprite.x = (0.25 + pos.x) * getTileWidth()
         sprite.y = pos.y * getTileHeight()

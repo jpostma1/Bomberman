@@ -1,10 +1,10 @@
 import { clone } from 'lodash';
 import { Sprite } from 'pixi.js';
-import { Coord, leftDir, rightDir, upDir, downDir, sign, addCoord, magnitude, subtractCoord } from "../../HelperFunctions"
+import { Coord, leftDir, rightDir, upDir, downDir, sign, addCoord, magnitude, subtractCoord, getSecondsElapsed } from "../../Misc/HelperFunctions"
 import { keyPressed } from "../../Input/KeyboardInput"
-import { getTileSprite, getWallSprite } from '../../Rendering/DrawFunctions';
-import { SideViewStage } from '../Level'
-
+import { getPlayerSprite, getTileSprite } from '../../Rendering/GetSpriteFunctions';
+import { SideViewStage } from '../SideViewStage';
+import { ControlSettings, gameSettings } from '../../Misc/Settings';
 
 // TODO: put and its related logic in the LevelStage Class
 let yDistortion = 2
@@ -26,15 +26,12 @@ export interface PlayerState {
     lives           : number
 }
 
-export interface ControlSettings {
-    keyLeft  :string
-    keyRight :string
-    keyUp    :string
-    keyDown  :string
-    placeBomb:string
-}
 
+
+// important to set at 1! (or higher)
+// since id is used to claim tiles (and the territory is initialized to 0)
 let currentPlayerId:number = 1
+
 export class Player {
 
     id:number
@@ -54,6 +51,7 @@ export class Player {
     skills:PlayerSkills
     state:PlayerState
 
+    lastHit:number = Number.MIN_VALUE
     alive:boolean = true
     constructor(
         public name:string, 
@@ -77,22 +75,46 @@ export class Player {
 
         // I believe TS forces to initialize in the constructor (instead of member func called by constructor)
         this.targetSprite = getTileSprite(1, 0, true)
-        this.sprite = getWallSprite()
+        this.sprite = getPlayerSprite(0, (this.id-1)*16)
 
     }
 
     prepForUpdate(collidesFunc:(pos:Coord) => boolean) {
         this.fourDirectionMovement()
-        
+        this.reloadBomb()
+        this.blinkIfInvincible()
+
         // TODO: when player presses 'other direction key', he should move that next free tile, currently he has to hold the key until he is centered on the current tile.
         // thus; lifting the 'other direction key' before centering results in ignored input
         this.calcTargetTile(collidesFunc)
     }
 
+    private blinkIfInvincible() {
+        let secondsSinceHit = getSecondsElapsed(this.lastHit)
+        if (secondsSinceHit < gameSettings.inviAfterHitDuration) {
+            this.sprite.visible = this.shouldBlinkFunc(secondsSinceHit)
+        } else 
+            this.sprite.visible = true
+
+    }
+    private shouldBlinkFunc(secondsSinceHit:number) :boolean {
+        return Math.floor(secondsSinceHit / gameSettings.inviAfterHitDuration * 15) % 2 == 0
+    }
+
+
+    private reloadBomb() {
+        if (this.state.bombs < this.skills.maxBombs 
+            && getSecondsElapsed(this.state.lastBombPlanted)  < this.skills.reloadTime)
+            this.state.bombs++
+    }
 
     takeLife() {
+        if (getSecondsElapsed(this.lastHit) < gameSettings.inviAfterHitDuration)
+            return
+
         this.state.lives--
-        
+        this.lastHit = performance.now()
+
         if (this.state.lives < 0) {
             this.alive = false
             this.sprite.visible = false
@@ -111,7 +133,7 @@ export class Player {
 
     isInReach(pos:Coord) : boolean {
         // TODO: instead of "-player.speed" round the player pos to the exact tile when aligned
-        // "-player.speed" currently prevents faulty hits but isn't correct in all cases
+        // "-player.speed" currently prevents faulty hits but is not a very clean solution
         return magnitude(subtractCoord(pos, { x:this.x, y:this.y })) < 1-this.speed
     }
 
@@ -125,6 +147,7 @@ export class Player {
     moveX(x:number) {
         this.x +=  x
     }
+
     moveY(y:number) {
         this.y += y
     }
@@ -159,7 +182,6 @@ export class Player {
     }
 
 
-
     updateSpritePos() {
         this.sprite.x = this.lvlStage.toScreenCoordX(this.x)
         this.sprite.y = this.lvlStage.toScreenCoordY(this.y)
@@ -168,7 +190,8 @@ export class Player {
 
         if(this.targetTile != undefined) {
             this.targetSprite.x = this.lvlStage.toScreenCoordX(this.targetTile.x)
-            this.targetSprite.y = this.lvlStage.toScreenCoordY(this.targetTile.y)
+            // targetSprite is half a normal tile, so we have to compensate with y + 1
+            this.targetSprite.y = this.lvlStage.toScreenCoordY(this.targetTile.y+1)
         } else {
             this.targetSprite.x = -100000
             this.targetSprite.y = -100000
@@ -176,7 +199,7 @@ export class Player {
 
     }
 
-    fourDirectionMovement() {
+    private fourDirectionMovement() {
 
         if (keyPressed(this.controls.keyLeft)) {
 
@@ -225,7 +248,7 @@ export class Player {
     }
 
 
-    pathFreeInDir(collidesFunc:any, direction?:Coord) {
+    private pathFreeInDir(collidesFunc:any, direction?:Coord) {
 
         if(direction != undefined) {
 
@@ -248,7 +271,7 @@ export class Player {
         return undefined
     }
 
-    calcTargetTile(collidesFunc:any) {
+    private calcTargetTile(collidesFunc:any) {
         this.updateCurrentTile()
 
         if (this.movingDirection != undefined) {
@@ -270,24 +293,24 @@ export class Player {
         }
     }
 
-    alingedWith(tile:Coord) {
+    private alingedWith(tile:Coord) {
         let dx = Math.abs(this.x - tile.x)
         let dy = Math.abs(this.y - tile.y)
 
         return dx < this.speed || dy < this.speed * yDistortion
     }
 
-    updateCurrentTile() {
+    private updateCurrentTile() {
         this.currentTile = { x:Math.round(this.x), y:Math.round(this.y) }
     }
 
-    resetMovingDirection() {
+    private resetMovingDirection() {
         this.movingDirection = this.secondaryMovingDirection
         this.secondaryMovingDirection = undefined
         this.tabuDirection = undefined
     }
 
-    maybeResetMovingDirection(direction:Coord) {
+    private maybeResetMovingDirection(direction:Coord) {
         if (this.movingDirection == direction)
 
             this.resetMovingDirection()
@@ -299,7 +322,7 @@ export class Player {
         
     }
 
-    setTabuSecondaryDirection() {
+    private setTabuSecondaryDirection() {
         let temp = this.secondaryMovingDirection
         this.secondaryMovingDirection = this.movingDirection
         this.movingDirection = temp
