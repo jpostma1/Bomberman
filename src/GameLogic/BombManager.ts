@@ -1,7 +1,7 @@
 import { clone, isEqual } from "lodash";
 import { Sprite } from "pixi.js";
 import { Coord } from "../Misc/HelperFunctions";
-import { getBombSprite } from "../Rendering/DrawFunctions";
+import { getBombSprite } from "../Rendering/GetSpriteFunctions";
 import { Drawable, DrawManager } from "../Rendering/DrawManager";
 import { SideViewStage } from "./SideViewStage";
 import { Player, PlayerSkills } from "./Player/Player";

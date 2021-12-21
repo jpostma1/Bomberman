@@ -2,7 +2,7 @@ import { Sprite } from "pixi.js"
 import { SideViewStage } from "../GameLogic/SideViewStage"
 import { Coord, removeItem } from "../Misc/HelperFunctions"
 import { IDPool } from "../Misc/idPool"
-import { getTileHeight, getTileWidth } from "./DrawFunctions"
+import { getTileHeight, getTileWidth } from "./GetSpriteFunctions"
 
 
 
