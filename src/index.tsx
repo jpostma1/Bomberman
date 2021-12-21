@@ -1,6 +1,4 @@
 import { Application } from 'pixi.js';
-import React from 'react';
-import ReactDOM from 'react-dom';
 import { keyPressed } from './Input/KeyboardInput';
 import { Game } from './GameLogic/Game';
 import { verboseLog } from './Misc/Logging';
@@ -42,12 +40,7 @@ loadAssets(() => {
         "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
     ]
 
-    let game = setupGame(levelString)
-
-    ReactDOM.render(<GameReporter game={game}></GameReporter>, document.getElementById('root'));
-})
-
-
+    
 
 let viewPortWidth:number = 1000
 // let viewPortHeight = 1000
@@ -85,65 +78,12 @@ function setupGame(lvlString:string[]):Game {
 
 
 
-interface GameState {
-    game:Game
-    
+
 }
 
-interface GameReporterState {
-    gameOver:boolean
-    winner:string
-    secondsLeft:number
-}
 
-// hacky component for a quick GUI 
-class GameReporter extends React.Component {
-    constructor(props:GameState) {
-        super(props)
-
-        this.state = {
-            gameOver: false,
-            winner: "No winner!",
-            secondsLeft: 0,
         }
 
-        // I thought this would happen in super(props)
-        // but TS requires this with "strictPropertyInitialization = true"
-        this.props = props
-
-        props.game.setReactComponent(this)
     }
 
-    props:GameState 
-    state:GameReporterState
-
-    gameOver(winnerMessage:string) {
-        this.state.gameOver = true
-        this.state.winner = winnerMessage
-        this.setState(this.state)
-    }
-
-    updateClock(secondsLeft:number) {
-        this.state.secondsLeft = secondsLeft
-        this.setState(this.state)
-    }
-
-    gamePokes() {
-        this.setState(this.state);
-    }
-    render() {
-        return (
-            <div>
-                <div style={{ display: this.state.secondsLeft > 0 ? "block" : "none" }}>
-                    <h2 color="black">{Math.ceil(this.state.secondsLeft)}</h2>
-                </div>
-                <div style={{ display: this.state.gameOver ? "block" : "none" }}>
-                    <h1>GameOver! </h1>
-                    <h2 color="green">{this.state.winner}</h2>
-                </div>
-                
-            </div>
-        );
-    }
-};
 

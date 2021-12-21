@@ -1,4 +1,4 @@
-import { Coord, forAll, getFraction, getSecondsElapsed, maximumBy, removeItem } from "../Misc/HelperFunctions"
+import { Coord, forAll, getFraction, getSecondsElapsed, maximumBy, minimumBy, removeItem } from "../Misc/HelperFunctions"
 import { Level } from './Level';
 import { Player } from './Player/Player';
 import { CollisionMap } from './CollisionMap';
@@ -7,8 +7,9 @@ import { ClaimedTerritory } from './ClaimedTerritory';
 import { Application } from 'pixi.js';
 import { BombAndItemLogic } from "./BombAndItemLogic";
 import { arrowControls, gameSettings, startSkills, wasdControls } from "../Misc/Settings";
-import { PlayerStateHeader } from "../Rendering/UI/PlayerStateHeader";
+import { SimpleUI } from "../Rendering/SimpleUI";
 import { logError } from "../Misc/Logging";
+import { getPlayerSprite } from "../Rendering/GetSpriteFunctions";
 
 
 
@@ -22,15 +23,10 @@ export let collisionIds = {
     wall: 5,
 }
 
+
 export class Game {
 
-    // NOTE: hacky coupling with React, for simple user interface updates
-    setReactComponent(reactComponent:any) {
-        this.reactComponent = reactComponent    
-    }
-
-    reactComponent:any
-    ui:PlayerStateHeader
+    ui:SimpleUI
 
     tileColumns:number
     tileRows:number
@@ -61,27 +57,33 @@ export class Game {
         this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
 
         this.addPlayers(playerPositions)
-        this.ui = new PlayerStateHeader(this.players, app.stage, this.level.stage.container)
+        this.ui = new SimpleUI(this.players, app.stage, this.level.stage.container)
     }
     
-    getWinnerMessage() {
+    getWinnerInfo() {
         let alivePlayers = this.players.filter(p => p.alive)
 
         
         if (alivePlayers.length > 0) {
-            // TODO: fix: rare case of a draw on claimed tiles will appoint first player ':)
             let winner = maximumBy(alivePlayers, (player:Player) => this.claimedTerritory.getClaimedTiles(player.id))
-            return winner.name
+
+            let loser = minimumBy(alivePlayers, (player:Player) => this.claimedTerritory.getClaimedTiles(player.id))
+            if (alivePlayers.length > 1 && loser != winner) {
+                return { message: winner.name + " won the game!!", tint: winner.tint }
+            }
         }
 
-        return "No winner!"
+        return { message: "No winner!", tint: 0x000000 }
     }
 
     
     runMechanics(newDelta:number) {
         if (this.isGameOver()) {
-            if (!this.gameOver)
-                this.reactComponent.gameOver(this.getWinnerMessage())
+            if (!this.gameOver) {
+                let winnerInfo = this.getWinnerInfo()
+                this.ui.gameOver(winnerInfo.message, winnerInfo.tint)
+            }
+                
             this.gameOver = true
             return
         }
@@ -135,14 +137,17 @@ export class Game {
         }
 
 
-        let player = new Player("P1", 0x0000FF, 
+        // NOTE: player id should be > 0 since claimed tiles are initialized with 0
+        let player = new Player(1, getPlayerSprite(0, 0), 
+            0x5555FF, 
             Math.floor(playerPositions[1].x), 
             Math.floor(playerPositions[1].y), 
             wasdControls,
             startSkills,  
             this.level.stage)
 
-        let otherPlayer = new Player("P2", 0xFF0000, 
+        let otherPlayer = new Player(2, getPlayerSprite(0, 16), 
+            0xFF5555, 
             Math.floor(playerPositions[2].x), 
             Math.floor(playerPositions[2].y), 
             arrowControls, 
@@ -246,11 +251,9 @@ export class Game {
     }
 
     readyForRender() {
-        // update clock
-        this.reactComponent.updateClock(this.getSecondsLeft())
-
         forAll(this.players, (player:Player) => player.updateSpritePos())
     }
+
 }
 
 

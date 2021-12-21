@@ -27,15 +27,13 @@ export interface PlayerState {
     tilesClaimed    : number
 }
 
-
-
-// important to set at 1! (or higher)
+// important to set at 1 ! (or higher)
 // since id is used to claim tiles (and the territory is initialized to 0)
 let currentPlayerId:number = 1
 
 export class Player {
 
-    id:number
+    name:string
 
     currentTile:Coord = {x:0, y:0}
 
@@ -46,8 +44,6 @@ export class Player {
     tabuDirection?:Coord
 
     targetSprite:Sprite
-    sprite:Sprite
-
 
     skills:PlayerSkills
     state:PlayerState
@@ -55,7 +51,8 @@ export class Player {
     lastHit:number = Number.MIN_VALUE
     alive:boolean = true
     constructor(
-        public name:string, 
+        public id:number,
+        public sprite:Sprite,
         public tint:number, 
         public x:number, 
         public y:number, 
@@ -63,7 +60,8 @@ export class Player {
         skills:PlayerSkills, 
         public lvlStage:SideViewStage) {
         
-        this.id = currentPlayerId++
+        
+        this.name = "P" + this.id
         
         this.skills = clone(skills)
         this.state = { 
@@ -75,10 +73,7 @@ export class Player {
 
         this.updateCurrentTile()
 
-        // I believe TS forces to initialize in the constructor (instead of member func called by constructor)
         this.targetSprite = getTileSprite(1, 0, true)
-        this.sprite = getPlayerSprite(0, (this.id-1)*16)
-
     }
 
     prepForUpdate(collidesFunc:(pos:Coord) => boolean) {
