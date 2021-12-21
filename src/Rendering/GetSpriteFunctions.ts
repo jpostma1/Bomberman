@@ -13,7 +13,9 @@ export function getWallSprite():Sprite {
 }
 
 export function getFloorSprite():Sprite {
-    return getTileSprite(0, 0)
+    let sprite = getTileSprite(0, 0, true)
+    sprite.anchor.y = -1
+    return sprite
 }
 
 
