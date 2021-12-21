@@ -1,13 +1,10 @@
-
-import * as PIXI from 'pixi.js';
+import { Application } from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { keyPressed } from './Input/KeyboardInput';
 import { Game } from './GameLogic/Game';
-import { debugLog, logYellow, verboseLog } from './Misc/Logging';
+import { verboseLog } from './Misc/Logging';
 import { loadAssets } from './Rendering/LoadAssets';
-import { Player } from './GameLogic/Player/Player';
-import { forAll } from './HelperFunctions';
 
 
 
@@ -59,12 +56,11 @@ loadAssets(() => {
 let viewPortWidth:number = 1000
 // let viewPortHeight = 1000
 
-let app:PIXI.Application
+let app:Application
 
 function setupGame(lvlString:string[]):Game {
     
-
-    app = new PIXI.Application({
+    app = new Application({
         width: viewPortWidth, 
         height: viewPortWidth*window.innerHeight/window.innerWidth,
         backgroundColor: 0xFFFFFF,
