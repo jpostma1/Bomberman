@@ -79,6 +79,7 @@ export class ItemManager {
         let itemSprite:Sprite = getItemExtraBombSprite()
         return new Item(this, itemSprite, pos, (player:Player) => {
             player.skills.maxBombs++
+            player.state.bombs++
         })
     }
     
@@ -106,8 +107,12 @@ export class ItemManager {
     spawnItemLessBomb(pos:Coord) : Item {
         let itemSprite:Sprite = getItemLessBombSprite()    
         return new Item(this, itemSprite, pos, (player:Player) => {
-            if (player.skills.maxBombs > 1)
+            if (player.skills.maxBombs > 1) {
                 player.skills.maxBombs--
+                if (player.state.bombs > player.skills.maxBombs)
+                    player.state.bombs = player.skills.maxBombs
+            }
+                
         })
     }
     
