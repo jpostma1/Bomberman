@@ -2,8 +2,6 @@
 
 // this file contains a range of small convenience functions to keep other code cleaner
 
-import { Player } from "./GameLogic/Player/Player"
-
 export let rightDir = { x:  1, y:  0 }
 export let leftDir  = { x: -1, y:  0 }
 export let upDir    = { x:  0, y:  1 }
@@ -29,9 +27,7 @@ export function randBetween(min:number, max:number):number {
     return min + Math.floor(Math.random()*(max-min))
 }
 
-// function randSeedBetween(min:number, max:number):number {
-//     return min + Math.floor(random()*(max-min))
-// }
+
 
 
 export function isObject(value:number):boolean {
@@ -45,6 +41,10 @@ export function isNumber(value:number):boolean {
 
 export function getFraction(x:number):number {
     return x-parseInt(x+"") 
+}
+
+export function hashCoord(coord:Coord):string {
+    return "x"+coord.x+"y"+coord.y
 }
 
 export function addCoord(c1:Coord, c2:Coord):Coord {
@@ -112,4 +112,9 @@ export function maximumBy<T>(list:T[], compareFunc:(item:T) => number):T {
     }
 
     return list[maxI]
+}
+
+
+export function getSecondsElapsed(thenInMS:number) {
+    return (performance.now() - thenInMS) / 1000
 }
