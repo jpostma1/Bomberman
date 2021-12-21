@@ -7,6 +7,7 @@ import { ClaimedTerritory } from './ClaimedTerritory';
 import { Application } from 'pixi.js';
 import { BombAndItemLogic } from "./BombAndItemLogic";
 import { arrowControls, gameSettings, startSkills, wasdControls } from "../Misc/Settings";
+import { PlayerStateHeader } from "../Rendering/UI/PlayerStateHeader";
 
 
 
@@ -28,6 +29,7 @@ export class Game {
     }
 
     reactComponent:any
+    ui:PlayerStateHeader
 
     tileColumns:number
     tileRows:number
@@ -56,6 +58,7 @@ export class Game {
         this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
 
         this.addPlayers()
+        this.ui = new PlayerStateHeader(this.players, app.stage, this.level.stage.container)
     }
     
     getWinnerMessage() {
@@ -96,7 +99,7 @@ export class Game {
                 this.claimTile(player)
             })
         }
-        
+
         this.bombManager.update()
         
         this.readyForRender()
@@ -109,6 +112,7 @@ export class Game {
         let outlineBonusTerritory:Coord[] = this.claimedTerritory.outlineMakesNewClosedTerritory(currentTile, player.id)
         outlineBonusTerritory.push(currentTile)
         forAll(outlineBonusTerritory, (pos:Coord) => this.level.tiles[pos.x][pos.y].tint = player.tint)
+        player.state.tilesClaimed = this.claimedTerritory.getClaimedTiles(player.id)
     }
 
     isGameOver() {

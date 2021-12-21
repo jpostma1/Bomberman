@@ -53,9 +53,9 @@ export let wasdControls:ControlSettings = {
 
 export let startSkills:PlayerSkills = {
     speed           : 0.05,
-    maxBombs        : 20,
+    maxBombs        : 2,
     bombPower       : 2,
-    reloadTime      : 10, // in seconds
+    reloadTime      : 5, // in seconds
     detonationTime  : 3, // in seconds
 }
 
@@ -85,8 +85,7 @@ export let itemSettings:ItemSettings = {
 
     speedBoost      : startSkills.speed/4,
     minBombPower    : 2,
-
     
-    itemDropChance  : 1, //0.2,
+    itemDropChance  : 0.1,
 }
 // =============== end settings ================

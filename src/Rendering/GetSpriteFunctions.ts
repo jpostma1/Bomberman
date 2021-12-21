@@ -31,7 +31,7 @@ export function getBombSprite() : Sprite {
         getAnimationFrameRectangle(textureSheet, 
             sheetWidth, 
             sheetHeight, 
-            1,
+            2,
             0
             ))
     const sprite = new Sprite(texture)

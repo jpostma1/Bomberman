@@ -24,6 +24,7 @@ export interface PlayerState {
     bombs           : number
     lastBombPlanted : number
     lives           : number
+    tilesClaimed    : number
 }
 
 
@@ -61,15 +62,16 @@ export class Player {
         public controls:ControlSettings, 
         skills:PlayerSkills, 
         public lvlStage:SideViewStage) {
-
+        
         this.id = currentPlayerId++
-
+        
         this.skills = clone(skills)
         this.state = { 
-                    bombs: this.skills.maxBombs,
-                    lastBombPlanted: 0,
-                    lives: 1
-                }
+            bombs: this.skills.maxBombs,
+            lastBombPlanted: 0,
+            lives: 1,
+            tilesClaimed: 0,
+        }
 
         this.updateCurrentTile()
 
@@ -104,8 +106,11 @@ export class Player {
 
     private reloadBomb() {
         if (this.state.bombs < this.skills.maxBombs 
-            && getSecondsElapsed(this.state.lastBombPlanted)  < this.skills.reloadTime)
-            this.state.bombs++
+            && getSecondsElapsed(this.state.lastBombPlanted) > this.skills.reloadTime) {
+                // incase more bombs need to be reloaded, reset lastBombPlanted
+                this.state.lastBombPlanted = performance.now()
+                this.state.bombs++
+            }
     }
 
     takeLife() {
@@ -127,14 +132,30 @@ export class Player {
         return this.state.bombs > 0
     }
 
-    public get speed() {
-        return this.skills.speed
-    }
-
     isInReach(pos:Coord) : boolean {
         // TODO: instead of "-player.speed" round the player pos to the exact tile when aligned
         // "-player.speed" currently prevents faulty hits but is not a very clean solution
         return magnitude(subtractCoord(pos, { x:this.x, y:this.y })) < 1-this.speed
+    }
+
+    public get speed() {
+        return this.skills.speed
+    }
+
+    public lives() {
+        return this.state.lives
+    }
+
+    public bombs() {
+        return this.state.bombs
+    }
+
+    public bombPower() {
+        return this.skills.bombPower
+    }
+
+    public tilesClaimed() {
+        return this.state.tilesClaimed
     }
 
     setX(x:number) {

@@ -18,18 +18,15 @@ export let adjacentTiles = [
 
 export class ClaimedTerritory {
 
-    width:number
-    height:number
-
-
     territory:CollisionMap
     visited:CollisionMap
     currentlyVisitedNum:number = 1
 
-    constructor(width:number, height:number) {
-        this.width = width
-        this.height = height
+    cachedIdCount:any = {}
 
+    constructor(
+        public width:number,
+        public height:number) {
 
         this.territory = new CollisionMap(width, height)
         this.visited   = new CollisionMap(width, height)
@@ -149,17 +146,21 @@ export class ClaimedTerritory {
         return filledTiles
     }
 
-    countClaimedTiles(id:number) :number {
-        let count:number = 0
+    handleCache(pos:Coord, id:number) {
+        if (this.cachedIdCount[id] == undefined)
+            this.cachedIdCount[id] = 0
 
-        for (let x = 0; x < this.width; x++) {
-            for (let y = 0; y < this.height; y++) {
-                if (this.checkTile({x:x, y:y}) == id)
-                    count++
-            }
-        }
+        let oldId = this.checkTile(pos)
+        
+        this.cachedIdCount[oldId]--
+        this.cachedIdCount[id]++
+    }
 
-        return count
+    getClaimedTiles(id:number) {
+        if (this.cachedIdCount[id] == undefined)
+            return 0
+        
+        return this.cachedIdCount[id]
     }
 
     setVisited(pos:Coord) {
@@ -170,19 +171,18 @@ export class ClaimedTerritory {
         return this.visited.checkValue(pos.x, pos.y) == this.currentlyVisitedNum
     }
 
-
     setTile(pos:Coord, id:number) {
+        this.handleCache(pos, id)
         this.territory.setValue(pos.x, pos.y, id)
     }
 
     setTileXY(x:number, y:number, id:number) {
-        this.territory.setValue(x, y, id)
+        this.setTile({x:x, y:y}, id)
     }
 
     checkTile(pos:Coord):number {
         return this.territory.checkValue(pos.x, pos.y)
     }
-
 
     getOtherTilesAround(inputPos:Coord, id:number) {
         if (this.checkTile(inputPos) == id) {
