@@ -1,6 +1,6 @@
 import _ from "lodash"
 import { isNumber } from "lodash"
-import { addCoord, Coord, downDir, forAll, leftDir, rightDir, upDir } from "../HelperFunctions"
+import { addCoord, Coord, downDir, forAll, leftDir, rightDir, upDir } from "../Misc/HelperFunctions"
 import { logError, verboseLog } from "../Misc/Logging"
 import { CollisionMap } from "./CollisionMap"
 

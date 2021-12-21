@@ -1,4 +1,4 @@
-import { Coord } from "../HelperFunctions"
+import { Coord } from "../Misc/HelperFunctions"
 
 
 export class CollisionMap {
