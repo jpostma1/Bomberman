@@ -1,6 +1,15 @@
 # Bomberman
 Bomberman Clone
 
+================ controls ========================
+P1 move: w-a-s-d
+P1 place bomb: space
+
+P2 move: left-right-up-down
+P2 place bomb: enter
+
+Restart game: n
+
 ================ how to run =======================
 npm install
 npm run start 

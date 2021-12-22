@@ -43,13 +43,13 @@ export class SimpleUI {
         
         let winnerText = new Text(winnerMessage, style)
         winnerText.x = viewPortWidth/2
-        winnerText.y = viewPortWidth/2
+        winnerText.y = winnerText.x*window.innerHeight/window.innerWidth
         winnerText.anchor.set(0.5, 0.5)
         this.container.addChild(winnerText)
 
         let restartText =  new Text("(Press N to restart)", style)
         restartText.x = viewPortWidth/2
-        restartText.y = viewPortWidth/2 + 40
+        restartText.y = restartText.x*window.innerHeight/window.innerWidth + 40
         restartText.anchor.set(0.5, 0.5)
         this.container.addChild(restartText)
     }
