@@ -1,5 +1,6 @@
 import { Coord, forAll, addCoord, hashCoord } from "../Misc/HelperFunctions"
 import { ItemSettings } from "../Misc/Settings"
+import { getFloorTexture } from "../Rendering/GetSpriteFunctions"
 import { Bomb, BombManager } from "./BombManager"
 import { adjacentTiles } from "./ClaimedTerritory"
 import { CollisionMap } from "./CollisionMap"
@@ -85,7 +86,14 @@ export class BombAndItemLogic {
     removeCrate(pos:Coord) {
         // can't erase crate collision yet, since a chainreaction could then penetrate multiple crates. Among other artifacts
         this.collisionMap.setCoord(pos, collisionIds.bombFire)
-        this.level.removeCrate(pos)
+        let tile = this.level.tiles[pos.x][pos.y]
+        
+        // adding a new tile to the container messed up PIXI's tracking of the zIndex
+        // setting the texture to floor didn't trigger this issue. 
+        tile.texture = getFloorTexture()
+        tile.alpha = 0.2
+        tile.anchor.y = -1
+
         this.itemManager.maybeSpawnItem(pos)
     }
 

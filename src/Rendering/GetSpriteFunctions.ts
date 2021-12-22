@@ -18,6 +18,25 @@ export function getFloorSprite():Sprite {
     return sprite
 }
 
+export function getFloorTexture():Texture {
+    const allTilesTexture:BaseTexture = BaseTexture.from('tileSheet')
+    let sheetWidth = 7
+    let sheetHeight = 1
+
+    let scale = 1/2
+
+    let tileColumn = 0
+    let tileRow = 0
+    let getHalveTile:boolean = true
+
+    return new Texture(allTilesTexture,
+        getAnimationFrameRectangle(allTilesTexture, 
+            sheetWidth, 
+            getHalveTile ? sheetHeight * 2 : sheetHeight, 
+            tileColumn,
+            tileRow
+            ))
+}
 
 export function getBombSprite() : Sprite {
     // hardcoded tile sheet info

@@ -28,7 +28,7 @@ export class Level {
         // I want this to crash incase the tile doesn't exist, instead of a silient error
         let tile = this.tiles[pos.x][pos.y]
         if (tile != undefined) {
-            this.stage.removeChild(tile)
+            tile.visible = false
         }
     }
 
