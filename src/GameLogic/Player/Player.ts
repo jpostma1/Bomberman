@@ -2,28 +2,18 @@ import { clone } from 'lodash';
 import { Sprite } from 'pixi.js';
 import { Coord, leftDir, rightDir, upDir, downDir, sign, addCoord, magnitude, subtractCoord, getSecondsElapsed } from "../../Misc/HelperFunctions"
 import { keyPressed } from "../../Input/KeyboardInput"
-import { getPlayerSprite, getTileSprite } from '../../Rendering/GetSpriteFunctions';
+import { getTileSprite } from '../../Rendering/GetSpriteFunctions';
 import { SideViewStage } from '../SideViewStage';
-import { ControlSettings, gameSettings } from '../../Misc/Settings';
+import { ControlSettings, PlayerSkills } from '../../Misc/Settings';
 
 // TODO: put and its related logic in the LevelStage Class
 let yDistortion = 2
 
 
-export interface PlayerSkills {
-    speed           : number
-
-    // bomb related
-    maxBombs        : number
-    bombPower       : number
-    reloadTime      : number
-    detonationTime  : number
-}
 
 export interface PlayerState {
     bombs           : number
     lastBombPlanted : number
-    lives           : number
     tilesClaimed    : number
 }
 
@@ -48,26 +38,28 @@ export class Player {
     skills:PlayerSkills
     state:PlayerState
 
+    inviAfterHitDuration:number
+
     lastHit:number = Number.MIN_VALUE
     alive:boolean = true
     constructor(
+        startSkills:PlayerSkills,
         public id:number,
         public sprite:Sprite,
         public tint:number, 
         public x:number, 
         public y:number, 
-        public controls:ControlSettings, 
-        skills:PlayerSkills, 
+        public controls:ControlSettings,
         public lvlStage:SideViewStage) {
         
         
         this.name = "P" + this.id
         
-        this.skills = clone(skills)
+        this.inviAfterHitDuration = startSkills.inviAfterHitDuration
+        this.skills = clone(startSkills)
         this.state = { 
             bombs: this.skills.maxBombs,
             lastBombPlanted: 0,
-            lives: 1,
             tilesClaimed: 0,
         }
 
@@ -88,14 +80,14 @@ export class Player {
 
     private blinkIfInvincible() {
         let secondsSinceHit = getSecondsElapsed(this.lastHit)
-        if (secondsSinceHit < gameSettings.inviAfterHitDuration) {
+        if (secondsSinceHit < this.inviAfterHitDuration) {
             this.sprite.visible = this.shouldBlinkFunc(secondsSinceHit)
         } else 
             this.sprite.visible = true
 
     }
     private shouldBlinkFunc(secondsSinceHit:number) :boolean {
-        return Math.floor(secondsSinceHit / gameSettings.inviAfterHitDuration * 15) % 2 == 0
+        return Math.floor(secondsSinceHit / this.inviAfterHitDuration * 15) % 2 == 0
     }
 
 
@@ -109,13 +101,13 @@ export class Player {
     }
 
     takeLife() {
-        if (getSecondsElapsed(this.lastHit) < gameSettings.inviAfterHitDuration)
+        if (getSecondsElapsed(this.lastHit) < this.inviAfterHitDuration)
             return
 
-        this.state.lives--
+        this.skills.lives--
         this.lastHit = performance.now()
 
-        if (this.state.lives < 0) {
+        if (this.skills.lives < 0) {
             this.alive = false
             this.sprite.visible = false
             this.targetSprite.visible = false
@@ -138,7 +130,7 @@ export class Player {
     }
 
     public lives() {
-        return this.state.lives
+        return this.skills.lives
     }
 
     public bombs() {

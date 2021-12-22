@@ -6,7 +6,7 @@ import { keyJustPressed, keyJustPressedListener } from '../Input/KeyboardInput';
 import { ClaimedTerritory } from './ClaimedTerritory';
 import { Application } from 'pixi.js';
 import { BombAndItemLogic } from "./BombAndItemLogic";
-import { arrowControls, gameSettings, startSkills, wasdControls } from "../Misc/Settings";
+import { arrowControls, BombermanSettings, wasdControls } from "../Misc/Settings";
 import { SimpleUI } from "../Rendering/SimpleUI";
 import { logError } from "../Misc/Logging";
 import { getPlayerSprite } from "../Rendering/GetSpriteFunctions";
@@ -33,30 +33,34 @@ export class Game {
 
     level:Level
     players:Player[] = []
-    bombManager:BombAndItemLogic
+    bombAndItemLogic:BombAndItemLogic
     
     collisionMap:CollisionMap
     claimedTerritory:ClaimedTerritory
 
-    gameOver:boolean = false
     unaccountedDeltaTime:number = 0
-    startingTime:number = performance.now()
-    constructor(app:Application, levelString:string[]) {
-        this.tileColumns = levelString.length
-        this.tileRows = levelString[0].length
 
-        this.level = new Level(levelString)
+    gameOver:boolean = false
+    gameDuration:number
+    startingTime:number = performance.now()
+    constructor(app:Application, settings:BombermanSettings) {
+        this.tileColumns = settings.levelString.length
+        this.tileRows = settings.levelString[0].length
+
+        this.gameDuration = settings.gameSettings.gameDuration
+
+        this.level = new Level(settings.levelString)
         app.stage.addChild(this.level.stage.container)
         
 
         this.collisionMap = new CollisionMap(this.tileColumns, this.tileRows)
         // side effect: parses player position
-        let playerPositions = this.setupCollisionMap(levelString)
+        let playerPositions = this.setupCollisionMap(settings.levelString)
 
-        this.bombManager = new BombAndItemLogic(this.players, this.collisionMap, this.level, gameSettings.explosionDuration)
+        this.bombAndItemLogic = new BombAndItemLogic(settings.itemSettings, this.players, this.collisionMap, this.level, settings.gameSettings.explosionDuration)
         this.claimedTerritory = new ClaimedTerritory(this.tileColumns, this.tileRows)
 
-        this.addPlayers(playerPositions)
+        this.addPlayers(settings, playerPositions)
         this.ui = new SimpleUI(this.players, app.stage, this.level.stage.container)
     }
     
@@ -87,8 +91,6 @@ export class Game {
             this.gameOver = true
             return
         }
-
-        
             
         // NOTE: probably better if this has a max, compensating a lagg spike of > 1 sec would only mess up the game
         let currentDelta = this.unaccountedDeltaTime+newDelta
@@ -106,7 +108,7 @@ export class Game {
             })
         }
 
-        this.bombManager.update()
+        this.bombAndItemLogic.update()
         
         this.readyForRender()
         this.unaccountedDeltaTime = getFraction(currentDelta)
@@ -126,7 +128,7 @@ export class Game {
         return this.getSecondsLeft() <= 0 || this.playersAlive() <= 1
     }
 
-    addPlayers(playerPositions:any) {
+    addPlayers(settings:BombermanSettings, playerPositions:any) {
         if (playerPositions[1] == undefined) {
             logError("player 1 is not present in level config file!")
             playerPositions[1] = {x:1, y: 1}
@@ -138,20 +140,18 @@ export class Game {
 
 
         // NOTE: player id should be > 0 since claimed tiles are initialized with 0
-        let player = new Player(1, getPlayerSprite(0, 0), 
-            0x5555FF, 
+        let player = new Player(settings.startSkills, 
+            1, getPlayerSprite(0, 0), 0x5555FF, 
             Math.floor(playerPositions[1].x), 
             Math.floor(playerPositions[1].y), 
             wasdControls,
-            startSkills,  
             this.level.stage)
 
-        let otherPlayer = new Player(2, getPlayerSprite(0, 16), 
-            0xFF5555, 
+        let otherPlayer = new Player(settings.startSkills, 
+            2, getPlayerSprite(0, 16), 0xFF5555, 
             Math.floor(playerPositions[2].x), 
             Math.floor(playerPositions[2].y), 
             arrowControls, 
-            startSkills,  
             this.level.stage)
 
         this.players.push(player, otherPlayer)
@@ -167,7 +167,7 @@ export class Game {
         keyJustPressedListener.addKeyJustPressedFunction((event:KeyboardEvent) => {
             forAll(this.players, (player:Player) => {
                 if (keyJustPressed(event, player.controls.placeBomb)) {
-                    this.bombManager.maybePlaceBomb(player)
+                    this.bombAndItemLogic.maybePlaceBomb(player)
                 }
             })
         })
@@ -247,7 +247,7 @@ export class Game {
     }
 
     getSecondsLeft() {
-        return gameSettings.gameDuration - getSecondsElapsed(this.startingTime)
+        return this.gameDuration - getSecondsElapsed(this.startingTime)
     }
 
     readyForRender() {

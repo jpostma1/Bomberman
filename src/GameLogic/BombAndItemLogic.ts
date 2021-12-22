@@ -1,5 +1,5 @@
 import { Coord, forAll, addCoord, hashCoord } from "../Misc/HelperFunctions"
-import { itemSettings } from "../Misc/Settings"
+import { ItemSettings } from "../Misc/Settings"
 import { Bomb, BombManager } from "./BombManager"
 import { adjacentTiles } from "./ClaimedTerritory"
 import { CollisionMap } from "./CollisionMap"
@@ -23,6 +23,7 @@ export class BombAndItemLogic {
     newFireDictionary:any = {}
 
     constructor (
+        itemSettings:ItemSettings,
         public players:Player[], 
         public collisionMap:CollisionMap, 
         public level:Level, 

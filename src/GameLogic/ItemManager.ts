@@ -100,7 +100,7 @@ export class ItemManager {
     spawnItemExtraLife(pos:Coord) : Item {
         let itemSprite:Sprite = getItemExtraLifeSprite()    
         return new Item(this, itemSprite, pos, (player:Player) => {
-            player.state.lives++
+            player.skills.lives++
         })
     }
     
