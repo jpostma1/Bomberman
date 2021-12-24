@@ -1,0 +1,66 @@
+
+
+{
+    "gameSettings": {
+        // all duration is in seconds
+        "gameDuration": 180,
+        "explosionDuration": 3
+    },
+
+    "startSkills": {
+        "lives"               : 1,
+        "speed"               : 0.035,
+        "inviAfterHitDuration": 2,
+
+        "maxBombs"            : 5,
+        "bombPower"           : 3,
+        
+
+        // in seconds (these are both not altered by items currently)
+        "reloadTime"          : 5, 
+        "detonationTime"      : 3
+    },
+
+    "itemSettings": {
+         // the chances are relative to each other
+        "extraBombChance"       : 30,
+        "extraSpeedChance"      : 20,
+        "extraFirePowerChance"  : 20,
+        "extraLifeChance"       : 10,
+        "lessBombChance"        : 5,
+        "lessSpeedChance"       : 5,
+        "lessFirePowerChance"   : 5,
+        "lessLifeChance"        : 5,
+        
+        // item effect variables
+        "speedBoost"      : 0.0125,
+        "minBombPower"    : 2,
+        
+        // should be within 0 and 1
+        "itemDropChance"  : 0.15
+    },
+
+    
+    "levelString": [
+        "wwwwwwwwwwwwwwwwwwwwwwww",
+        "wcwcwcwcwcwcwcwcwcwcwccw",
+        "wc....p1...c.c.c.c.c.ccw",
+        "wc.cwcwcwc.cwcwcwcwcwccw",
+        "w..cwcwcwc.cwcwcwcwcwccw",
+        "wc.c.c.c.c.c.c.c.c.c.ccw",
+        "wc.c.c.cwc.cwcwcwcwcwccw",
+        "wc.........c.c.c.c.c.ccw",
+        "wc.cwcwcwc.cwcwcwcwcwccw",
+        "wc.c.c.....c.c.c.c.c.ccw",
+        "wcwcwc.cwcwc.cwcwcwcwccw",
+        "wc.c.c.....c.c.c.c.c.ccw",
+        "wcwcwc.cwc.c.cwcwcwcwccw",
+        "w......c.c.c.c.c.c.c.ccw",
+        "wc.cwc.cwc.c.cwcwcwcwccw",
+        "w......c.c.c.c.c.c.c.ccw",
+        "wc.cwc.cwc.c.cwcwcwcwccw",
+        "w.....p2...............w",
+        "wwwwwwwwwwwwwwwwwwwwwwww"
+    ]
+
+}
